@@ -5,9 +5,15 @@ import {
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { EventForm } from './EventForm'
+import { formatTime, type TimeFormat } from '../lib/timeFormat'
 
-function gridRange(month: Date) {
-  return { start: startOfWeek(startOfMonth(month)), end: endOfWeek(endOfMonth(month)) }
+type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+function gridRange(month: Date, weekStartsOn: WeekDay) {
+  return {
+    start: startOfWeek(startOfMonth(month), { weekStartsOn }),
+    end: endOfWeek(endOfMonth(month), { weekStartsOn }),
+  }
 }
 
 function eventsOn(day: Date, events: CalendarEvent[]) {
@@ -16,18 +22,18 @@ function eventsOn(day: Date, events: CalendarEvent[]) {
   )
 }
 
-export function MonthView() {
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const { start, end } = gridRange(month)
+  const { start, end } = gridRange(month, weekStartsOn)
   const days = eachDayOfInterval({ start, end })
 
   useEffect(() => {
     let cancelled = false
-    const range = gridRange(month)
+    const range = gridRange(month, weekStartsOn)
     getEvents(range.start, range.end)
       .then((data) => {
         if (cancelled) return
@@ -39,7 +45,7 @@ export function MonthView() {
       })
     // Ignore the result if the user changed months before it came back
     return () => { cancelled = true }
-  }, [month, reloadKey])
+  }, [month, reloadKey, weekStartsOn])
 
   return (
     <section className="month">
@@ -52,7 +58,7 @@ export function MonthView() {
       {error && <p role="alert">{error}</p>}
 
       <div className="month-grid">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+        {days.slice(0, 7).map((d) => format(d, 'EEE')).map((d) => (
           <div key={d} className="weekday">{d}</div>
         ))}
         {days.map((day) => (
@@ -73,7 +79,7 @@ export function MonthView() {
                 style={{ background: e.color ?? undefined }}
                 onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
               >
-                {!e.all_day && format(new Date(e.starts_at), 'HH:mm')} {e.title}
+                {!e.all_day && formatTime(new Date(e.starts_at), timeFormat)} {e.title}
               </div>
             ))}
           </div>

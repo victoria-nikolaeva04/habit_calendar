@@ -80,6 +80,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          time_format: string
           timezone: string
           updated_at: string
           week_start_on: number
@@ -88,6 +89,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          time_format?: string
           timezone?: string
           updated_at?: string
           week_start_on?: number
@@ -96,6 +98,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          time_format?: string
           timezone?: string
           updated_at?: string
           week_start_on?: number
@@ -107,7 +110,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_own_account: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

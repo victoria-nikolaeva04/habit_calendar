@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { addDays, endOfDay, format, isToday, startOfDay } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { EventForm } from './EventForm'
+import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
 
 const HOUR_PX = 48
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -16,7 +17,7 @@ function timedStyle(e: CalendarEvent, day: Date) {
   return { top, height, background: e.color ?? undefined }
 }
 
-export function DayView() {
+export function DayView({ timeFormat = '12h' }: { timeFormat?: TimeFormat }) {
   const [day, setDay] = useState(() => startOfDay(new Date()))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +75,7 @@ export function DayView() {
           <div className="week-gutter">
             {HOURS.map((h) => (
               <div key={h} className="week-hour-label" style={{ height: HOUR_PX }}>
-                {h === 0 ? '' : format(new Date(2000, 0, 1, h), 'ha')}
+                {h === 0 ? '' : formatHour(h, timeFormat)}
               </div>
             ))}
           </div>
@@ -94,7 +95,7 @@ export function DayView() {
                 onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
               >
                 <strong>
-                  {format(new Date(e.starts_at), 'HH:mm')}–{format(new Date(e.ends_at), 'HH:mm')}
+                  {formatTime(new Date(e.starts_at), timeFormat)}–{formatTime(new Date(e.ends_at), timeFormat)}
                 </strong>{' '}
                 {e.title}
               </div>

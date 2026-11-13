@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   addWeeks, eachDayOfInterval, endOfDay, endOfWeek, format,
   isToday, startOfDay, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { EventForm } from './EventForm'
+import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
 
 const HOUR_PX = 48
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -26,17 +27,20 @@ function timedStyle(e: CalendarEvent, day: Date) {
   return { top, height, background: e.color ?? undefined }
 }
 
-export function WeekView() {
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
+type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat }) {
+  const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), opts))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart) })
+  const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, opts) })
 
   useEffect(() => {
     let cancelled = false
-    getEvents(weekStart, endOfWeek(weekStart))
+    getEvents(weekStart, endOfWeek(weekStart, opts))
       .then((data) => {
         if (cancelled) return
         setEvents(data)
@@ -46,7 +50,7 @@ export function WeekView() {
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [weekStart, reloadKey])
+  }, [weekStart, reloadKey, opts])
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
@@ -59,7 +63,7 @@ export function WeekView() {
         <button onClick={() => setWeekStart(addWeeks(weekStart, -1))}>‹</button>
         <h2>{title}</h2>
         <button onClick={() => setWeekStart(addWeeks(weekStart, 1))}>›</button>
-        <button onClick={() => setWeekStart(startOfWeek(new Date()))}>Today</button>
+        <button onClick={() => setWeekStart(startOfWeek(new Date(), opts))}>Today</button>
       </header>
       {error && <p role="alert">{error}</p>}
 
@@ -96,7 +100,7 @@ export function WeekView() {
           <div className="week-gutter">
             {HOURS.map((h) => (
               <div key={h} className="week-hour-label" style={{ height: HOUR_PX }}>
-                {h === 0 ? '' : format(new Date(2000, 0, 1, h), 'ha')}
+                {h === 0 ? '' : formatHour(h, timeFormat)}
               </div>
             ))}
           </div>
@@ -117,7 +121,7 @@ export function WeekView() {
                   style={timedStyle(e, day)}
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                 >
-                  <strong>{format(new Date(e.starts_at), 'HH:mm')}</strong> {e.title}
+                  <strong>{formatTime(new Date(e.starts_at), timeFormat)}</strong> {e.title}
                 </div>
               ))}
             </div>

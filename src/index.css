@@ -511,3 +511,95 @@ select:focus-visible {
   gap: 0.75rem;
   padding: 0.5rem 0 0.75rem;
 }
+
+/* ---------- Profile ---------- */
+
+.profile {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.profile h2,
+.profile h3 {
+  margin: 0;
+}
+
+.profile form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.profile .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.profile .field span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.profile .field input {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+}
+
+.profile .form-error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: #b42318;
+  background: #fee4e2;
+  border-radius: 8px;
+}
+
+.profile .form-success {
+  margin: 0;
+  color: #067647;
+}
+
+.profile .primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.profile .primary:hover {
+  background: var(--accent-hover);
+}
+
+.profile .account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.profile .account-actions h3 {
+  width: 100%;
+}
+
+.profile .danger {
+  color: #b42318;
+  border-color: #fda29b;
+}
+
+.profile .danger:hover {
+  background: #fee4e2;
+}
+
+.app-bar .profile-btn {
+  margin-left: auto;
+}
