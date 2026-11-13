@@ -235,6 +235,10 @@ input {
   grid-template-columns: 3.5rem repeat(7, minmax(0, 1fr));
 }
 
+.day-grid.single {
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+}
+
 .week-head {
   position: sticky;
   top: 0;
@@ -279,6 +283,16 @@ input {
 .week-timed {
   position: relative;
   padding: 0;
+}
+
+.today-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0.6rem;
+  vertical-align: middle;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .week-timed.today {
