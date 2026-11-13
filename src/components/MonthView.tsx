@@ -4,6 +4,7 @@ import {
   format, isSameMonth, isToday, startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
+import { EventForm } from './EventForm'
 
 function gridRange(month: Date) {
   return { start: startOfWeek(startOfMonth(month)), end: endOfWeek(endOfMonth(month)) }
@@ -19,6 +20,8 @@ export function MonthView() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const { start, end } = gridRange(month)
   const days = eachDayOfInterval({ start, end })
 
@@ -36,7 +39,7 @@ export function MonthView() {
       })
     // Ignore the result if the user changed months before it came back
     return () => { cancelled = true }
-  }, [month])
+  }, [month, reloadKey])
 
   return (
     <section className="month">
@@ -60,16 +63,25 @@ export function MonthView() {
               !isSameMonth(day, month) && 'outside',
               isToday(day) && 'today',
             ].filter(Boolean).join(' ')}
+            onClick={() => setEditing({ day })}
           >
             <span className="day-number">{format(day, 'd')}</span>
             {eventsOn(day, events).map((e) => (
-              <div key={e.id} className="event" style={{ background: e.color ?? undefined }}>
+              <div
+                key={e.id}
+                className="event"
+                style={{ background: e.color ?? undefined }}
+                onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
+              >
                 {!e.all_day && format(new Date(e.starts_at), 'HH:mm')} {e.title}
               </div>
             ))}
           </div>
         ))}
       </div>
+      {editing && (
+        <EventForm {...editing} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+      )}
     </section>
   )
 }

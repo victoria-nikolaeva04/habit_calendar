@@ -4,6 +4,7 @@ import {
   isToday, startOfDay, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
+import { EventForm } from './EventForm'
 
 const HOUR_PX = 48
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -29,6 +30,8 @@ export function WeekView() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart) })
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export function WeekView() {
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [weekStart])
+  }, [weekStart, reloadKey])
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
@@ -74,9 +77,14 @@ export function WeekView() {
         <div className="week-grid week-allday">
           <div className="week-gutter">all-day</div>
           {days.map((day) => (
-            <div key={day.toISOString()} className="week-col">
+            <div key={day.toISOString()} className="week-col" onClick={() => setEditing({ day })}>
               {eventsOn(day, events).filter((e) => e.all_day).map((e) => (
-                <div key={e.id} className="event" style={{ background: e.color ?? undefined }}>
+                <div
+                  key={e.id}
+                  className="event"
+                  style={{ background: e.color ?? undefined }}
+                  onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
+                >
                   {e.title}
                 </div>
               ))}
@@ -97,12 +105,18 @@ export function WeekView() {
               key={day.toISOString()}
               className={`week-col week-timed${isToday(day) ? ' today' : ''}`}
               style={{ height: HOUR_PX * 24 }}
+              onClick={() => setEditing({ day })}
             >
               {HOURS.map((h) => (
                 <div key={h} className="week-hour-line" style={{ top: h * HOUR_PX }} />
               ))}
               {eventsOn(day, events).filter((e) => !e.all_day).map((e) => (
-                <div key={e.id} className="event week-event" style={timedStyle(e, day)}>
+                <div
+                  key={e.id}
+                  className="event week-event"
+                  style={timedStyle(e, day)}
+                  onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
+                >
                   <strong>{format(new Date(e.starts_at), 'HH:mm')}</strong> {e.title}
                 </div>
               ))}
@@ -110,6 +124,9 @@ export function WeekView() {
           ))}
         </div>
       </div>
+      {editing && (
+        <EventForm {...editing} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+      )}
     </section>
   )
 }

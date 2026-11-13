@@ -338,3 +338,176 @@ input {
     padding: 1px 3px;
   }
 }
+
+/* ---------- Event form ---------- */
+
+.event-form {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  z-index: 10;
+  width: min(440px, calc(100vw - 2rem));
+  padding: 1.5rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 40%), 0 20px 40px rgb(0 0 0 / 25%);
+}
+
+.event-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-form h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.event-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.event-form .field span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.event-form .field input {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+}
+
+.event-form .field-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.event-form .check {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.event-form .check input {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+}
+
+.event-form .form-error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: #b42318;
+  background: #fee4e2;
+  border-radius: 8px;
+}
+
+.event-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.event-form .form-actions .danger {
+  margin-right: auto;
+  color: #b42318;
+  border-color: #fda29b;
+}
+
+.event-form .form-actions .danger:hover {
+  background: #fee4e2;
+}
+
+.event-form .form-actions .primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.event-form .form-actions .primary:hover {
+  background: var(--accent-hover);
+}
+
+@media (max-width: 480px) {
+  .event-form .field-row {
+    flex-direction: column;
+  }
+}
+
+.event-form textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.event-form textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.event-form .swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.event-form .swatch {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.event-form .swatch.none {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+.event-form .swatch.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--surface) inset;
+}
+
+select {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+select:hover {
+  background: var(--surface-muted);
+}
+
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0.75rem;
+}
