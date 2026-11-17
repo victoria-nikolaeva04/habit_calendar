@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { browserTimeZone } from '../lib/tz'
 import { deleteAccount, updateProfile, type Profile as ProfileRow } from '../lib/api'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -20,6 +21,18 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(profile.time_format === '24h' ? '24h' : '12h')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const dirty =
+    displayName.trim() !== (profile.display_name ?? '') ||
+    timezone !== profile.timezone ||
+    weekStart !== profile.week_start_on ||
+    timeFormat !== (profile.time_format === '24h' ? '24h' : '12h')
+
+  function handleBack() {
+    if (dirty && !confirm('You have unsaved changes. Discard them?')) return
+    onBack()
+  }
 
   const timezones = Intl.supportedValuesOf('timeZone')
   if (!timezones.includes('UTC')) timezones.unshift('UTC')
@@ -45,19 +58,19 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
 
   async function handleDelete() {
     if (!confirm('Delete your account? This permanently removes your profile and all your events.')) return
+    setDeleteError(null)
     try {
       await deleteAccount()
     } catch (err) {
-      setError((err as Error).message)
+      setDeleteError((err as Error).message)
     }
   }
 
   return (
     <div className="profile">
-      <button type="button" onClick={onBack}>← Back to calendar</button>
+      <button type="button" onClick={handleBack}>← Back to calendar</button>
       <h2>Profile</h2>
-      {(
-        <form onSubmit={handleSave}>
+      <form onSubmit={handleSave}>
           <label className="field">
             <span>Email</span>
             <input value={session.user.email ?? ''} disabled />
@@ -72,6 +85,11 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
             <select value={timezone} onChange={(e) => { setTimezone(e.target.value); setSaved(false) }}>
               {timezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
             </select>
+            {timezone !== browserTimeZone() && (
+              <button type="button" onClick={() => { setTimezone(browserTimeZone()); setSaved(false) }}>
+                Use this device's time zone ({browserTimeZone()})
+              </button>
+            )}
           </label>
           <label className="field">
             <span>Week starts on</span>
@@ -91,12 +109,12 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
           <div className="form-actions">
             <button type="submit" className="primary">Save changes</button>
           </div>
-        </form>
-      )}
+      </form>
       <section className="account-actions">
         <h3>Account</h3>
         <button type="button" onClick={() => supabase.auth.signOut()}>Sign out</button>
         <button type="button" className="danger" onClick={handleDelete}>Delete account</button>
+        {deleteError && <p role="alert" className="form-error">{deleteError}</p>}
       </section>
     </div>
   )
