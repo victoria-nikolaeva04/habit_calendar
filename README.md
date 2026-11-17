@@ -22,7 +22,7 @@ A calendar app to help with habit tracking. Built with React, TypeScript, Vite a
 - [React 19](https://react.dev) + TypeScript
 - [Vite](https://vite.dev)
 - [Supabase](https://supabase.com) (auth + Postgres database)
-- [date-fns](https://date-fns.org) for date handling
+- [date-fns](https://date-fns.org) + `@date-fns/tz` for date handling in the profile's time zone
 - ESLint
 
 ## Getting started
@@ -84,6 +84,9 @@ src/
   lib/
     api.ts             # Events and profile queries
     supabase.ts        # Supabase client
+    tz.ts              # Time zone helpers (profile zone <-> UTC)
+    dayLayout.ts       # Event placement in Week/Day columns, overlap layout
+    eventStyle.ts      # Event chip colors with readable text
     timeFormat.ts      # 12h / 24h formatting
     database.types.ts  # Generated database types
 ```
