@@ -1,4 +1,4 @@
-import { addDays, addMonths, addYears, endOfDay } from 'date-fns'
+import { addDays, addMonths, addYears, differenceInCalendarDays, endOfDay, set } from 'date-fns'
 import { format } from 'date-fns'
 import { nowIn, wallTime } from './tz'
 
@@ -33,6 +33,13 @@ export function occurrences(start: Date, end: Date, rule: Recurrence, timeZone: 
   const out: { start: Date; end: Date }[] = []
   let overflow = false
 
+  // Every occurrence keeps the original length: the same number of days after its start, ending at the
+  // same wall-clock time. (Shifting start and end separately would stretch an event across short months.)
+  const spanDays = differenceInCalendarDays(end, start)
+  const endFor = (s: Date) => set(addDays(s, spanDays), {
+    hours: end.getHours(), minutes: end.getMinutes(), seconds: end.getSeconds(), milliseconds: end.getMilliseconds(),
+  })
+
   // false = stop generating (past the end date, enough events, or too many)
   const add = (s: Date, e: Date) => {
     if (until && s > until) return false
@@ -53,12 +60,16 @@ export function occurrences(start: Date, end: Date, rule: Recurrence, timeZone: 
       for (const d of days) {
         const offset = base + d
         if (offset < 0) continue // earlier than the first event
-        if (!add(addDays(start, offset), addDays(end, offset))) break weeks
+        const s = addDays(start, offset)
+        if (!add(s, endFor(s))) break weeks
       }
     }
   } else {
     const step = { daily: addDays, monthly: addMonths, yearly: addYears }[rule.freq]
-    for (let i = 0; add(step(start, i * interval), step(end, i * interval)); i++);
+    for (let i = 0; ; i++) {
+      const s = step(start, i * interval)
+      if (!add(s, endFor(s))) break
+    }
   }
   return overflow ? null : out
 }
