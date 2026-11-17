@@ -9,6 +9,7 @@ import { EventForm } from './EventForm'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
 import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
+import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
 import { inTz, nowIn } from '../lib/tz'
 
@@ -124,7 +125,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { 
                     onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                     onKeyDown={activate(() => setEditing({ event: e }))}
                   >
-                    {!e.all_day && startsToday && `${formatTime(inTz(e.starts_at, timeZone), timeFormat)} `}{e.title}
+                    {!e.all_day && startsToday && `${formatTime(inTz(e.starts_at, timeZone), timeFormat)} `}{e.title}{e.series_id && <RepeatMark />}
                   </div>
                 )
               })}

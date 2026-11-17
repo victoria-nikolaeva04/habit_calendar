@@ -353,7 +353,7 @@ input {
 
 .event-form {
   margin: auto;
-  width: min(440px, calc(100vw - 2rem));
+  width: min(640px, calc(100vw - 2rem));
   padding: 1.5rem;
   color: var(--text);
   background: var(--surface);
@@ -450,6 +450,77 @@ input {
   .event-form .field-row {
     flex-direction: column;
   }
+}
+
+.event-form fieldset.plain {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.event-form fieldset.plain:disabled {
+  opacity: 0.55;
+}
+
+.event-form .repeat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-form .repeat-summary {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.event-form .custom-repeat {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-form .field input[type='number'] {
+  width: 100%;
+}
+
+.event-form .scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.event-form .hint {
+  color: var(--text-muted);
+}
+
+.event-form .weekdays {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.event-form .weekday {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.event-form .weekday.selected {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.event-form .field select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
 }
 
 .event-form textarea {
@@ -798,4 +869,10 @@ button:disabled {
 
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+.repeat-mark {
+  margin-left: 0.3em;
+  font-size: 0.85em;
+  opacity: 0.8;
 }

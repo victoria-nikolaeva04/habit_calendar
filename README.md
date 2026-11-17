@@ -48,7 +48,7 @@ A calendar app to help with habit tracking. Built with React, TypeScript, Vite a
    ```
 
 3. Your Supabase database needs these pieces (types are in [src/lib/database.types.ts](src/lib/database.types.ts)):
-   - `events` table: `id`, `user_id`, `title`, `notes`, `starts_at`, `ends_at`, `all_day`, `color`, `created_at`
+   - `events` table: `id`, `user_id`, `title`, `notes`, `starts_at`, `ends_at`, `all_day`, `color`, `series_id`, `recurrence`, `created_at`
    - `profiles` table: `id`, `display_name`, `timezone`, `week_start_on`, `time_format`, `created_at`, `updated_at`
    - A `delete_own_account` RPC function used by the Delete account button
 

@@ -8,6 +8,7 @@ import { EventForm } from './EventForm'
 import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
 import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
+import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
 import { inTz, nowIn } from '../lib/tz'
 import { HOUR_PX, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
@@ -100,7 +101,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { w
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                   onKeyDown={activate(() => setEditing({ event: e }))}
                 >
-                  {e.title}
+                  {e.title}{e.series_id && <RepeatMark />}
                 </div>
               ))}
             </div>
@@ -140,7 +141,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { w
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                   onKeyDown={activate(() => setEditing({ event: e }))}
                 >
-                  <strong>{formatTime(inTz(e.starts_at, timeZone), timeFormat)}</strong> {e.title}
+                  <strong>{formatTime(inTz(e.starts_at, timeZone), timeFormat)}</strong> {e.title}{e.series_id && <RepeatMark />}
                 </div>
               ))}
               {isToday(day) && <div className="now-line" style={{ top: nowTop }} aria-hidden="true" />}

@@ -47,6 +47,8 @@ export type Database = {
           ends_at: string
           id: string
           notes: string | null
+          recurrence: Json | null
+          series_id: string | null
           starts_at: string
           title: string
           user_id: string
@@ -58,6 +60,8 @@ export type Database = {
           ends_at: string
           id?: string
           notes?: string | null
+          recurrence?: Json | null
+          series_id?: string | null
           starts_at: string
           title: string
           user_id?: string
@@ -69,6 +73,8 @@ export type Database = {
           ends_at?: string
           id?: string
           notes?: string | null
+          recurrence?: Json | null
+          series_id?: string | null
           starts_at?: string
           title?: string
           user_id?: string
@@ -111,6 +117,10 @@ export type Database = {
     }
     Functions: {
       delete_own_account: { Args: never; Returns: undefined }
+      open_series_tails: {
+        Args: never
+        Returns: Database['public']['Tables']['events']['Row'][]
+      }
     }
     Enums: {
       [_ in never]: never
