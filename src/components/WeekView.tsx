@@ -1,42 +1,41 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  addWeeks, eachDayOfInterval, endOfDay, endOfWeek, format,
-  isToday, startOfDay, startOfWeek,
+  addWeeks, eachDayOfInterval, endOfWeek, format,
+  isToday, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { EventForm } from './EventForm'
 import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
+import { eventStyle } from '../lib/eventStyle'
+import { eventTooltip } from '../lib/eventLabel'
+import { activate } from '../lib/a11y'
+import { inTz, nowIn } from '../lib/tz'
+import { HOUR_PX, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
+import { useNow } from '../hooks/useNow'
 
-const HOUR_PX = 48
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
-
-function eventsOn(day: Date, events: CalendarEvent[]) {
-  return events.filter(
-    (e) => new Date(e.starts_at) <= endOfDay(day) && new Date(e.ends_at) >= startOfDay(day),
-  )
-}
-
-// Position a timed event inside a day column, clamped to that day
-function timedStyle(e: CalendarEvent, day: Date) {
-  const dayStart = startOfDay(day).getTime()
-  const dayEnd = endOfDay(day).getTime()
-  const s = Math.max(new Date(e.starts_at).getTime(), dayStart)
-  const en = Math.min(new Date(e.ends_at).getTime(), dayEnd)
-  const top = ((s - dayStart) / 3_600_000) * HOUR_PX
-  const height = Math.max(((en - s) / 3_600_000) * HOUR_PX, 18)
-  return { top, height, background: e.color ?? undefined }
-}
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), opts))
+  // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
+  const [anchor, setAnchor] = useState(() => nowIn(timeZone))
+  const weekStart = useMemo(() => startOfWeek(anchor, opts), [anchor, opts])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
+  const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, opts) })
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const nowInZone = inTz(useNow(), timeZone)
+  const nowTop = ((nowInZone.getHours() * 60 + nowInZone.getMinutes()) / 60) * HOUR_PX
+
+  // Open scrolled to about the current hour instead of midnight
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = Math.max(0, nowIn(timeZone).getHours() - 1) * HOUR_PX
+  }, [timeZone])
 
   useEffect(() => {
     let cancelled = false
@@ -60,14 +59,14 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsO
   return (
     <section className="month week">
       <header className="month-header">
-        <button onClick={() => setWeekStart(addWeeks(weekStart, -1))}>‹</button>
+        <button aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}>‹</button>
         <h2>{title}</h2>
-        <button onClick={() => setWeekStart(addWeeks(weekStart, 1))}>›</button>
-        <button onClick={() => setWeekStart(startOfWeek(new Date(), opts))}>Today</button>
+        <button aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}>›</button>
+        <button onClick={() => setAnchor(nowIn(timeZone))}>Today</button>
       </header>
       {error && <p role="alert">{error}</p>}
 
-      <div className="week-scroll">
+      <div className="week-scroll" ref={scrollRef}>
         <div className="week-grid week-head">
           <div className="week-gutter" />
           {days.map((day) => (
@@ -81,13 +80,25 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsO
         <div className="week-grid week-allday">
           <div className="week-gutter">all-day</div>
           {days.map((day) => (
-            <div key={day.toISOString()} className="week-col" onClick={() => setEditing({ day })}>
+            <div
+              key={day.toISOString()}
+              className="week-col"
+              role="button"
+              tabIndex={0}
+              aria-label={`${format(day, 'EEEE, MMMM d')}: add all-day event`}
+              onClick={() => setEditing({ day })}
+              onKeyDown={activate(() => setEditing({ day }))}
+            >
               {eventsOn(day, events).filter((e) => e.all_day).map((e) => (
                 <div
                   key={e.id}
                   className="event"
-                  style={{ background: e.color ?? undefined }}
+                  style={eventStyle(e.color)}
+                  role="button"
+                  tabIndex={0}
+                  title={eventTooltip(e, timeZone, timeFormat)}
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
+                  onKeyDown={activate(() => setEditing({ event: e }))}
                 >
                   {e.title}
                 </div>
@@ -109,27 +120,36 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h' }: { weekStartsO
               key={day.toISOString()}
               className={`week-col week-timed${isToday(day) ? ' today' : ''}`}
               style={{ height: HOUR_PX * 24 }}
-              onClick={() => setEditing({ day })}
+              role="button"
+              tabIndex={0}
+              aria-label={`${format(day, 'EEEE, MMMM d')}: add event`}
+              onClick={(ev) => setEditing({ day, at: slotAt(ev, day) })}
+              onKeyDown={activate(() => setEditing({ day }))}
             >
               {HOURS.map((h) => (
                 <div key={h} className="week-hour-line" style={{ top: h * HOUR_PX }} />
               ))}
-              {eventsOn(day, events).filter((e) => !e.all_day).map((e) => (
+              {layoutTimed(eventsOn(day, events).filter((e) => !e.all_day), day).map(({ event: e, style }) => (
                 <div
                   key={e.id}
                   className="event week-event"
-                  style={timedStyle(e, day)}
+                  style={style}
+                  role="button"
+                  tabIndex={0}
+                  title={eventTooltip(e, timeZone, timeFormat)}
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
+                  onKeyDown={activate(() => setEditing({ event: e }))}
                 >
-                  <strong>{formatTime(new Date(e.starts_at), timeFormat)}</strong> {e.title}
+                  <strong>{formatTime(inTz(e.starts_at, timeZone), timeFormat)}</strong> {e.title}
                 </div>
               ))}
+              {isToday(day) && <div className="now-line" style={{ top: nowTop }} aria-hidden="true" />}
             </div>
           ))}
         </div>
       </div>
       {editing && (
-        <EventForm {...editing} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+        <EventForm {...editing} timeZone={timeZone} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
       )}
     </section>
   )
