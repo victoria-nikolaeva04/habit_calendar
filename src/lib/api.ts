@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Database } from './database.types'
+import { toUtcIso } from './tz'
 
 type Tables = Database['public']['Tables']
 export type CalendarEvent = Tables['events']['Row']
@@ -10,8 +11,8 @@ export async function getEvents(from: Date, to: Date) {
   const { data, error } = await supabase
     .from('events')
     .select('*')
-    .lt('starts_at', to.toISOString())
-    .gt('ends_at', from.toISOString())
+    .lt('starts_at', toUtcIso(to))
+    .gt('ends_at', toUtcIso(from))
     .order('starts_at')
   if (error) throw error
   return data
