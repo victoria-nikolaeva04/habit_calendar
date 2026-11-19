@@ -15,8 +15,8 @@ import { useNow } from '../hooks/useNow'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
-export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
-  const [day, setDay] = useState(() => startOfDay(nowIn(timeZone)))
+export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void }) {
+  const [day, setDay] = useState(() => startOfDay(inTz(selected, timeZone)))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
   if (jump !== seenJump) {
@@ -38,6 +38,9 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump }: 
     if (el) el.scrollTop = Math.max(0, nowIn(timeZone).getHours() - 1) * HOUR_PX
   }, [timeZone])
 
+  // The side panel shows whichever day this view is on
+  useEffect(() => { onSelectDay?.(day) }, [day, onSelectDay])
+
   useEffect(() => {
     let cancelled = false
     getEvents(startOfDay(day), endOfDay(day), timeZone)
@@ -50,7 +53,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump }: 
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [day, reloadKey, timeZone])
+  }, [day, reloadKey, timeZone, version])
 
   const allDay = events.filter((e) => e.all_day)
   const timed = events.filter((e) => !e.all_day)
@@ -139,7 +142,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump }: 
         </div>
       </div>
       {editing && (
-        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1); onChanged?.() }} />
       )}
     </section>
   )

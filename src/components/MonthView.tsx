@@ -39,8 +39,8 @@ function gridRange(month: Date, weekStartsOn: WeekDay) {
   }
 }
 
-export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
-  const [month, setMonth] = useState(() => startOfMonth(nowIn(timeZone)))
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void }) {
+  const [month, setMonth] = useState(() => startOfMonth(selected))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
   if (jump !== seenJump) {
@@ -83,7 +83,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       })
     // Ignore the result if the user changed months before it came back
     return () => { cancelled = true }
-  }, [month, reloadKey, weekStartsOn, timeZone])
+  }, [month, reloadKey, weekStartsOn, timeZone, version])
 
   return (
     <section className="month">
@@ -112,6 +112,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
                 'day',
                 !isSameMonth(day, month) && 'outside',
                 isToday(day) && 'today',
+                isSameDay(day, selected) && 'selected',
                 isExpanded && 'expanded',
               ].filter(Boolean).join(' ')}
               role="button"
@@ -120,7 +121,8 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
               onClick={() => setEditing({ day })}
               onKeyDown={activate(() => setEditing({ day }))}
             >
-              <span className="day-number">{format(day, 'd')}</span>
+              <span className="day-number" title="Show this day in the side panel"
+                onClick={(ev) => { ev.stopPropagation(); onSelectDay?.(day) }}>{format(day, 'd')}</span>
               {dayHolidays.map((h) => <HolidayChip key={h.name} holiday={h} />)}
               {visible.map((e) => {
                 // Multi-day events show their start time only on the day they begin
@@ -154,7 +156,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
         })}
       </div>
       {editing && (
-        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1); onChanged?.() }} />
       )}
     </section>
   )

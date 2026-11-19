@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addWeeks, eachDayOfInterval, endOfWeek, format,
-  isToday, startOfWeek,
+  isSameDay, isToday, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { EventPopup } from './EventPopup'
@@ -20,10 +20,10 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
   // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
-  const [anchor, setAnchor] = useState(() => nowIn(timeZone))
+  const [anchor, setAnchor] = useState(() => inTz(selected, timeZone))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
   if (jump !== seenJump) {
@@ -59,7 +59,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [weekStart, reloadKey, opts, timeZone])
+  }, [weekStart, reloadKey, opts, timeZone, version])
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
@@ -80,7 +80,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
         <div className="week-grid week-head">
           <div className="week-gutter" />
           {days.map((day) => (
-            <div key={day.toISOString()} className={`week-dayhead${isToday(day) ? ' today' : ''}`}>
+            <div key={day.toISOString()} className={`week-dayhead${isToday(day) ? ' today' : ''}${isSameDay(day, selected) ? ' selected' : ''}`}
+              title="Show this day in the side panel" onClick={() => onSelectDay?.(day)}>
               <span>{format(day, 'EEE')}</span>
               <span className="day-number">{format(day, 'd')}</span>
             </div>
@@ -160,7 +161,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
         </div>
       </div>
       {editing && (
-        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1); onChanged?.() }} />
       )}
     </section>
   )

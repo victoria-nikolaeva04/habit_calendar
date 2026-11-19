@@ -3,12 +3,14 @@ import { SignIn } from './components/SignIn'
 import { useCallback, useEffect, useState } from 'react'
 import { getProfile, type Profile as ProfileRow } from './lib/api'
 import type { TimeFormat } from './lib/timeFormat'
-import { resolveTimeZone } from './lib/tz'
+import { format, startOfDay } from 'date-fns'
+import { nowIn, resolveTimeZone, wallTime } from './lib/tz'
 import { Profile } from './components/Profile'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
 import { SearchBox } from './components/SearchBox'
+import { SidePanel } from './components/SidePanel'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
@@ -17,7 +19,9 @@ export default function App() {
   const { session, loading } = useSession()
   const [view, setView] = useState<View>('month')
   const [showProfile, setShowProfile] = useState(false)
-  const [jump, setJump] = useState<{ date: Date } | null>(null) // set when a search result asks to show a date
+  const [jump, setJump] = useState<{ date: Date } | null>(null) // asks the views to show a date
+  const [selectedKey, setSelectedKey] = useState<string | null>(null) // "yyyy-MM-dd" shown in the side panel; null = today
+  const [version, setVersion] = useState(0) // bumped when events change, so every list reloads
   const [loaded, setProfile] = useState<ProfileRow | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
   const userId = session?.user.id
@@ -38,6 +42,12 @@ export default function App() {
     if (userId) loadProfile(userId)
   }, [userId, loadProfile])
 
+  const selected = selectedKey ? wallTime(selectedKey, timeZone) : startOfDay(nowIn(timeZone))
+  const select = useCallback((day: Date) => setSelectedKey(format(day, 'yyyy-MM-dd')), [])
+  // Select a day and make the calendar show it
+  const goTo = (day: Date) => { select(day); setJump({ date: day }) }
+  const changed = useCallback(() => setVersion((n) => n + 1), [])
+
   if (loading) return <p className="loading">Loading…</p>
   if (!session) return <SignIn />
   return (
@@ -53,7 +63,7 @@ export default function App() {
               <option key={v} value={v}>{v[0].toUpperCase() + v.slice(1)}</option>
             ))}
           </select>
-          <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={(date) => setJump({ date })} />
+          <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={goTo} />
           <button className="profile-btn" disabled={!profile}
             title={profile ? undefined : 'Loading your profile…'}
             onClick={() => setShowProfile(true)}>Profile</button>
@@ -64,10 +74,16 @@ export default function App() {
             <button type="button" onClick={() => { setProfileError(null); loadProfile(session.user.id) }}>Retry</button>
           </p>
         )}
-        {/* key: switching time zone restarts the view at "today" in the new zone */}
-        {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
-        {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
-        {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
+        <div className="calendar-layout">
+          <div className="calendar-main">
+            {/* key: switching time zone restarts the view at "today" in the new zone */}
+            {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} />}
+            {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} />}
+            {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} />}
+          </div>
+          <SidePanel day={selected} timeZone={timeZone} timeFormat={timeFormat} holidayCountry={holidayCountry}
+            version={version} onGoTo={goTo} onChanged={changed} />
+        </div>
       </div>
     </>
   )
