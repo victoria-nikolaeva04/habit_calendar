@@ -4,7 +4,7 @@ import {
   isToday, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
-import { EventForm } from './EventForm'
+import { EventPopup } from './EventPopup'
 import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
 import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
@@ -154,7 +154,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
         </div>
       </div>
       {editing && (
-        <EventForm {...editing} timeZone={timeZone} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
+        <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1) }} />
       )}
     </section>
   )

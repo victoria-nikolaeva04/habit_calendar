@@ -889,3 +889,60 @@ button:disabled {
   font-size: 0.85em;
   opacity: 0.8;
 }
+
+/* ---------- Event details ---------- */
+
+.event-details {
+  width: min(420px, calc(100vw - 2rem));
+}
+
+.event-details .details-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.event-details .details-head h3 {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-details .details-dot {
+  flex: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 4px;
+}
+
+.event-details .icon-btn {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.event-details .icon-btn:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.event-details p {
+  margin: 0.75rem 0 0;
+}
+
+.event-details .details-when,
+.event-details .details-repeat {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.event-details .details-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
