@@ -1174,3 +1174,284 @@ button:disabled {
     width: auto;
   }
 }
+
+/* ---------- Tasks ---------- */
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.task input[type='checkbox'] {
+  flex: none;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.task .task-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task small {
+  color: var(--text-muted);
+}
+
+.task.done .task-text {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* In a calendar day */
+.task-chip {
+  margin-top: 4px;
+  padding: 3px 8px;
+  background: var(--surface-muted);
+  border-left: 3px solid var(--text-muted);
+  border-radius: 4px;
+}
+
+.task-chip:hover {
+  filter: brightness(0.96);
+}
+
+/* In the side panel */
+.panel-tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.task-row {
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+}
+
+.task-row:hover {
+  background: var(--surface-muted);
+}
+
+.task-row .task-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.panel-subhead {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.event-details .details-check {
+  flex: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.event-details .details-done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* ---------- Task lists, subtasks, repeating ---------- */
+
+.panel-list-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-list-bar select {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-progress {
+  color: var(--text-muted);
+}
+
+/* Subtasks under a task in the side panel */
+.task-subtasks {
+  margin: 0 0 0.25rem 1.6rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.task-subtasks label,
+.details-subtasks label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.task-subtasks li.done span,
+.details-subtasks li.done span {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.task-subtasks input,
+.details-subtasks input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* Subtasks in the task popup */
+.event-details .details-subtasks {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Subtasks in the task form */
+.subtask-edit {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.subtask-edit li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.subtask-edit input {
+  flex: 1;
+  min-width: 0;
+}
+
+.subtask-edit .icon-btn,
+.lists-dialog .icon-btn {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.subtask-edit .icon-btn:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.event-form .add-subtask {
+  align-self: flex-start;
+}
+
+/* Manage task lists */
+.lists-dialog {
+  width: min(440px, calc(100vw - 2rem));
+}
+
+.lists-dialog h3 {
+  flex: 1;
+}
+
+.lists-edit {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lists-edit li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lists-edit input {
+  flex: 1;
+  min-width: 0;
+}
+
+.lists-edit .list-builtin {
+  flex: 1;
+  padding: 0.4rem 0;
+}
+
+.lists-edit small {
+  color: var(--text-muted);
+}
+
+.lists-edit .danger {
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.lists-edit .danger:hover {
+  background: var(--danger-bg);
+}
+
+.lists-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.lists-add input {
+  flex: 1;
+  min-width: 0;
+}
+
+.lists-add .primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.lists-add .primary:disabled {
+  opacity: 0.5;
+}
+
+/* Task results in the search list */
+.search-results .search-dot.task-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--accent);
+  background: transparent;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+}
+
+.search-results .search-text strong.done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
