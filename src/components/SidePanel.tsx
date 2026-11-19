@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { addDays, endOfDay, format, isToday, startOfDay } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
+import { getBacklogTasks, getTasks, type Task, type TaskList } from '../lib/taskApi'
 import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
-import { inTz } from '../lib/tz'
+import { inTz, nowIn, toUtcIso } from '../lib/tz'
+import { ALL_LISTS, DEFAULT_LIST, DEFAULT_LIST_NAME, dayKey } from '../lib/tasks'
 import { useHolidays } from '../hooks/useHolidays'
 import { HolidayChip } from './HolidayChip'
 import { EventPopup } from './EventPopup'
 import { RepeatMark } from './RepeatMark'
+import { TaskChip } from './TaskChip'
+import { TaskPopup } from './TaskPopup'
+import { ListsDialog } from './ListsDialog'
 
 type Props = {
   day: Date                     // the selected day, at the start of the day in the profile time zone
@@ -17,7 +22,11 @@ type Props = {
   holidayCountry?: string | null
   version: number               // changes when events were edited elsewhere, so the list reloads
   onGoTo: (day: Date) => void   // show another day (the calendar follows)
-  onChanged: () => void         // an event was added, edited or deleted here
+  onChanged: () => void         // an event or task was added, edited or deleted here
+  lists: TaskList[]
+  listFilter: string            // the list(s) tasks are shown from: ALL_LISTS, DEFAULT_LIST or a list id
+  onListFilter: (filter: string) => void
+  onListsChanged: () => void    // lists were added, renamed or deleted
 }
 
 // When an event happens on `day`: "All day", "9:00 AM – 10:00 AM", or the part that falls on this day
@@ -34,11 +43,17 @@ function describeTime(e: CalendarEvent, day: Date, timeZone: string, tf: TimeFor
 }
 
 // Side panel next to the calendar, built as a stack of sections so more can be added under "Events".
-export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, onGoTo, onChanged }: Props) {
+export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, onGoTo, onChanged, lists, listFilter, onListFilter, onListsChanged }: Props) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
+  const [dayTasks, setDayTasks] = useState<Task[]>([])
+  const [backlog, setBacklog] = useState<Task[]>([])
+  const [managingLists, setManagingLists] = useState(false)
+  const [tasksLoaded, setTasksLoaded] = useState(false)
+  const [tasksError, setTasksError] = useState<string | null>(null)
+  const [editingTask, setEditingTask] = useState<{ task?: Task; day?: Date } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const holidays = useHolidays(holidayCountry, day, day).get(format(day, 'yyyy-MM-dd')) ?? []
 
@@ -56,6 +71,35 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
       })
     return () => { cancelled = true }
   }, [day, timeZone, version, reloadKey])
+
+  useEffect(() => {
+    let cancelled = false
+    const key = dayKey(day)
+    Promise.all([getTasks(key, key, listFilter), getBacklogTasks(dayKey(nowIn(timeZone)), listFilter, toUtcIso(startOfDay(nowIn(timeZone))))])
+      .then(([forDay, rest]) => {
+        if (cancelled) return
+        setDayTasks(forDay)
+        setBacklog(rest)
+        setTasksLoaded(true)
+        setTasksError(null)
+      })
+      .catch((e: Error) => {
+        if (!cancelled) setTasksError(e.message)
+      })
+    return () => { cancelled = true }
+  }, [day, timeZone, version, reloadKey, listFilter])
+
+  // The day's own tasks, then what is overdue, then what has no due date
+  const key = dayKey(day)
+  const overdue = backlog.filter((t) => t.due_date !== null && t.due_date !== key)
+  const undated = backlog.filter((t) => t.due_date === null)
+  const hasTasks = dayTasks.length + backlog.length > 0
+  const taskRow = (t: Task) => (
+    <li key={t.id}>
+      <TaskChip task={t} timeFormat={timeFormat} variant="row"
+        onOpen={(task) => setEditingTask({ task })} onChanged={() => { setReloadKey((k) => k + 1); onChanged() }} />
+    </li>
+  )
 
   // All-day events first, then by start time
   const sorted = [...events].sort((a, b) => Number(b.all_day) - Number(a.all_day))
@@ -98,8 +142,62 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
             ))}
           </ul>
         </section>
+
+        <section className="panel-section" aria-labelledby="panel-tasks-title">
+          <div className="panel-section-head">
+            <h3 id="panel-tasks-title">Tasks</h3>
+            <button type="button" onClick={() => setEditingTask({ day })}>+ Add</button>
+          </div>
+          <div className="panel-list-bar">
+            <select aria-label="Task list" value={listFilter} onChange={(e) => onListFilter(e.target.value)}>
+              <option value={ALL_LISTS}>All lists</option>
+              <option value={DEFAULT_LIST}>{DEFAULT_LIST_NAME}</option>
+              {lists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+            <button type="button" onClick={() => setManagingLists(true)}>Manage lists</button>
+          </div>
+          {tasksError && <p role="alert">{tasksError}</p>}
+          {overdue.length > 0 && (
+            <>
+              <h4 className="panel-subhead">Overdue</h4>
+              <ul className="panel-tasks">{overdue.map(taskRow)}</ul>
+            </>
+          )}
+          {!tasksError && tasksLoaded && !hasTasks && <p className="panel-empty">No tasks yet.</p>}
+          {overdue.length > 0 && (dayTasks.length > 0 || tasksLoaded) && (
+            <h4 className="panel-subhead">{format(day, 'EEE, MMM d')}</h4>
+          )}
+          {!tasksError && tasksLoaded && hasTasks && dayTasks.length === 0 && (
+            <p className="panel-empty">No tasks due this day.</p>
+          )}
+          {dayTasks.length > 0 && <ul className="panel-tasks">{dayTasks.map(taskRow)}</ul>}
+          {undated.length > 0 && (
+            <>
+              <h4 className="panel-subhead">No due date</h4>
+              <ul className="panel-tasks">{undated.map(taskRow)}</ul>
+            </>
+          )}
+        </section>
       </div>
 
+      {editingTask && (
+        <TaskPopup
+          {...editingTask}
+          lists={lists}
+          defaultList={lists.some((l) => l.id === listFilter) ? listFilter : null}
+          timeFormat={timeFormat}
+          onChanged={() => { setReloadKey((k) => k + 1); onChanged() }}
+          onDone={() => { setEditingTask(null); setReloadKey((k) => k + 1); onChanged() }}
+        />
+      )}
+      {managingLists && (
+        <ListsDialog
+          lists={lists}
+          onChanged={() => { onListsChanged(); onChanged() }}
+          onDeleted={(id) => { if (listFilter === id) onListFilter(ALL_LISTS) }}
+          onClose={() => setManagingLists(false)}
+        />
+      )}
       {editing && (
         <EventPopup
           {...editing}
