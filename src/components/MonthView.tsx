@@ -5,6 +5,7 @@ import {
 } from 'date-fns'
 import { eventsOn } from '../lib/dayLayout'
 import { getEvents, type CalendarEvent } from '../lib/api'
+import type { Task, TaskList } from '../lib/taskApi'
 import { EventPopup } from './EventPopup'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
 import { eventStyle } from '../lib/eventStyle'
@@ -13,6 +14,10 @@ import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
 import { useHolidays } from '../hooks/useHolidays'
 import { HolidayChip } from './HolidayChip'
+import { TaskChip } from './TaskChip'
+import { TaskPopup } from './TaskPopup'
+import { useTasks } from '../hooks/useTasks'
+import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -39,7 +44,7 @@ function gridRange(month: Date, weekStartsOn: WeekDay) {
   }
 }
 
-export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void }) {
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string }) {
   const [month, setMonth] = useState(() => startOfMonth(selected))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
@@ -51,9 +56,11 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null) // day (ms) showing all its events
+  const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const { start, end } = gridRange(month, weekStartsOn)
   const days = eachDayOfInterval({ start, end })
+  const taskDays = useTasks(start, end, version, listFilter)
   const holidays = useHolidays(holidayCountry, start, end)
 
   // Track the day-cell height so we show as many events as fit instead of a fixed number
@@ -103,8 +110,13 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
           const dayEvents = eventsOn(day, events)
           const isExpanded = expanded === day.getTime()
           const dayHolidays = holidays.get(format(day, 'yyyy-MM-dd')) ?? []
-          const visible = isExpanded ? dayEvents : dayEvents.slice(0, fitCount(dayEvents.length, cellH, compact, dayHolidays.length))
-          const hidden = dayEvents.length - visible.length
+          const dayTasks = taskDays.get(dayKey(day)) ?? []
+          // Events come first, then tasks; whatever doesn't fit goes under "+N more"
+          const total = dayEvents.length + dayTasks.length
+          const shown = isExpanded ? total : fitCount(total, cellH, compact, dayHolidays.length)
+          const visible = dayEvents.slice(0, shown)
+          const visibleTasks = dayTasks.slice(0, Math.max(0, shown - dayEvents.length))
+          const hidden = total - visible.length - visibleTasks.length
           return (
             <div
               key={day.toISOString()}
@@ -142,6 +154,10 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
                   </div>
                 )
               })}
+              {visibleTasks.map((t) => (
+                <TaskChip key={t.id} task={t} timeFormat={timeFormat}
+                  onOpen={(task) => setEditingTask({ task })} onChanged={() => onChanged?.()} />
+              ))}
               {(hidden > 0 || isExpanded) && (
                 <button
                   type="button"
@@ -157,6 +173,9 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       </div>
       {editing && (
         <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1); onChanged?.() }} />
+      )}
+      {editingTask && (
+        <TaskPopup {...editingTask} lists={lists} timeFormat={timeFormat} onChanged={() => onChanged?.()} onDone={() => { setEditingTask(null); onChanged?.() }} />
       )}
     </section>
   )

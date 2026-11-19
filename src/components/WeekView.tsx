@@ -4,6 +4,7 @@ import {
   isSameDay, isToday, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
+import type { Task, TaskList } from '../lib/taskApi'
 import { EventPopup } from './EventPopup'
 import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
 import { eventStyle } from '../lib/eventStyle'
@@ -12,6 +13,10 @@ import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
 import { useHolidays } from '../hooks/useHolidays'
 import { HolidayChip } from './HolidayChip'
+import { TaskChip } from './TaskChip'
+import { TaskPopup } from './TaskPopup'
+import { useTasks } from '../hooks/useTasks'
+import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
 import { HOUR_PX, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
 import { useNow } from '../hooks/useNow'
@@ -20,7 +25,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
   // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
   const [anchor, setAnchor] = useState(() => inTz(selected, timeZone))
@@ -34,9 +39,11 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
+  const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, opts) })
   const holidays = useHolidays(holidayCountry, days[0], days[6])
+  const taskDays = useTasks(days[0], days[6], version, listFilter)
   const scrollRef = useRef<HTMLDivElement>(null)
   const nowInZone = inTz(useNow(), timeZone)
   const nowTop = ((nowInZone.getHours() * 60 + nowInZone.getMinutes()) / 60) * HOUR_PX
@@ -115,6 +122,10 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
                   {e.title}{e.series_id && <RepeatMark />}
                 </div>
               ))}
+              {(taskDays.get(dayKey(day)) ?? []).map((t) => (
+                <TaskChip key={t.id} task={t} timeFormat={timeFormat}
+                  onOpen={(task) => setEditingTask({ task })} onChanged={() => onChanged?.()} />
+              ))}
             </div>
           ))}
         </div>
@@ -162,6 +173,9 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
       </div>
       {editing && (
         <EventPopup {...editing} timeZone={timeZone} timeFormat={timeFormat} onDone={() => { setEditing(null); setReloadKey((k) => k + 1); onChanged?.() }} />
+      )}
+      {editingTask && (
+        <TaskPopup {...editingTask} lists={lists} timeFormat={timeFormat} onChanged={() => onChanged?.()} onDone={() => { setEditingTask(null); onChanged?.() }} />
       )}
     </section>
   )
