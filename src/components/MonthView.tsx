@@ -66,7 +66,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
   useEffect(() => {
     let cancelled = false
     const range = gridRange(month, weekStartsOn)
-    getEvents(range.start, range.end)
+    getEvents(range.start, range.end, timeZone)
       .then((data) => {
         if (cancelled) return
         setEvents(data)
@@ -77,7 +77,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       })
     // Ignore the result if the user changed months before it came back
     return () => { cancelled = true }
-  }, [month, reloadKey, weekStartsOn])
+  }, [month, reloadKey, weekStartsOn, timeZone])
 
   return (
     <section className="month">

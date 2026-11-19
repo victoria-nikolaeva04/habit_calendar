@@ -42,12 +42,15 @@ export type Database = {
       events: {
         Row: {
           all_day: boolean
+          cancelled: boolean
           color: string | null
           created_at: string
           ends_at: string
           id: string
           notes: string | null
+          original_start: string | null
           recurrence: Json | null
+          recurrence_ends_at: string | null
           series_id: string | null
           starts_at: string
           title: string
@@ -55,12 +58,15 @@ export type Database = {
         }
         Insert: {
           all_day?: boolean
+          cancelled?: boolean
           color?: string | null
           created_at?: string
           ends_at: string
           id?: string
           notes?: string | null
+          original_start?: string | null
           recurrence?: Json | null
+          recurrence_ends_at?: string | null
           series_id?: string | null
           starts_at: string
           title: string
@@ -68,18 +74,29 @@ export type Database = {
         }
         Update: {
           all_day?: boolean
+          cancelled?: boolean
           color?: string | null
           created_at?: string
           ends_at?: string
           id?: string
           notes?: string | null
+          original_start?: string | null
           recurrence?: Json | null
+          recurrence_ends_at?: string | null
           series_id?: string | null
           starts_at?: string
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_series_fk"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -120,9 +137,20 @@ export type Database = {
     }
     Functions: {
       delete_own_account: { Args: never; Returns: undefined }
-      open_series_tails: {
-        Args: never
+      events_in_range: {
+        Args: { range_start: string; range_end: string }
         Returns: Database['public']['Tables']['events']['Row'][]
+      }
+      split_series: {
+        Args: {
+          p_series: string
+          p_split_at: string
+          p_old_rule: Json | null
+          p_old_ends_at: string | null
+          p_new: Json | null
+          p_drop_exceptions: boolean
+        }
+        Returns: string
       }
     }
     Enums: {

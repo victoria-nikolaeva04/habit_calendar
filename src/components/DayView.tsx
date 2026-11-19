@@ -34,7 +34,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry }: { time
 
   useEffect(() => {
     let cancelled = false
-    getEvents(startOfDay(day), endOfDay(day))
+    getEvents(startOfDay(day), endOfDay(day), timeZone)
       .then((data) => {
         if (cancelled) return
         setEvents(data)
@@ -44,7 +44,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry }: { time
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [day, reloadKey])
+  }, [day, reloadKey, timeZone])
 
   const allDay = events.filter((e) => e.all_day)
   const timed = events.filter((e) => !e.all_day)

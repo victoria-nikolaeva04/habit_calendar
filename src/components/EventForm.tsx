@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { addHours, addMonths, endOfDay, format, setHours, startOfDay } from 'date-fns'
+import { addDays, addHours, addMonths, differenceInCalendarDays, endOfDay, format, set, setHours, startOfDay } from 'date-fns'
 import { inTz, toUtcIso, wallTime } from '../lib/tz'
 import {
-  createEvents, deleteEvent, deleteSeries, updateEvent, updateSeries, type CalendarEvent,
+  cancelOccurrence, createEvents, createSeries, deleteEvent, deleteSeries, saveOccurrence, splitSeries,
+  updateEvent, updateSeries, type CalendarEvent,
 } from '../lib/api'
-import { MAX_OCCURRENCES, describeRule, horizonDate, occurrences, type Freq, type Recurrence } from '../lib/recurrence'
+import {
+  MAX_REPEATS, describeRule, lastOccurrence, occurrences, splitRule, type Freq, type Recurrence,
+} from '../lib/recurrence'
 
 // The dropdown choices, like Google Calendar: presets named after the start date, plus Custom
 type Repeat = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays' | 'custom'
@@ -46,9 +49,10 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
   const [interval, setIntervalValue] = useState('1')
   const [unit, setUnit] = useState<Freq>('weekly')
   const [repeatDays, setRepeatDays] = useState<number[]>([defaultStart.getDay()])
-  // Editing one occurrence of a series: change just this one, or the whole series
+  // Editing one occurrence of a series: change just this one, this and the ones after it, or the whole series
   const inSeries = !!event?.series_id
-  const [scope, setScope] = useState<'one' | 'all'>('one')
+  const [scope, setScope] = useState<'one' | 'following' | 'all'>('one')
+  const initialDay = event ? format(inTz(event.starts_at, timeZone), 'yyyy-MM-dd') : ''
   const [error, setError] = useState<string | null>(null)
 
   // The chosen repeat pattern, without its end
@@ -81,9 +85,60 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
       ends_at: toUtcIso(endDate),
     }
     try {
-      if (event && inSeries && scope === 'all') {
-        // Times differ per occurrence, so only the shared details change for the whole series
-        await updateSeries(event.series_id!, { title, notes: fields.notes, color })
+      if (event && inSeries && scope !== 'one') {
+        // The time and length become part of the schedule; each event keeps its own date
+        if (format(startDate, 'yyyy-MM-dd') !== initialDay) {
+          setError('To move one event to another date, choose "This event".')
+          return
+        }
+        const master = event.master!
+        const rule = master.recurrence as unknown as Recurrence
+        const masterStart = inTz(master.starts_at, timeZone)
+        const masterEnd = inTz(master.ends_at, timeZone)
+        // A new first start/end: `from`'s date with the form's times, and the form's number of days between them
+        const schedule = (from: Date) => {
+          const s = set(from, {
+            hours: startDate.getHours(), minutes: startDate.getMinutes(),
+            seconds: startDate.getSeconds(), milliseconds: startDate.getMilliseconds(),
+          })
+          const e = set(addDays(s, differenceInCalendarDays(endDate, startDate)), {
+            hours: endDate.getHours(), minutes: endDate.getMinutes(),
+            seconds: endDate.getSeconds(), milliseconds: endDate.getMilliseconds(),
+          })
+          return { s, e }
+        }
+        const shapeOf = (a: Date, b: Date) =>
+          [format(a, 'HH:mm:ss.SSS'), differenceInCalendarDays(b, a), format(b, 'HH:mm:ss.SSS')].join('|')
+        // When the schedule changes, events that were edited or deleted one by one no longer line up with it
+        const scheduleChanged = allDay !== master.all_day || shapeOf(masterStart, masterEnd) !== shapeOf(startDate, endDate)
+
+        if (scope === 'all') {
+          const { s, e } = schedule(masterStart)
+          const last = lastOccurrence(s, e, rule, timeZone)
+          await updateSeries(master.id, {
+            title, notes: fields.notes, color, all_day: allDay,
+            starts_at: toUtcIso(s), ends_at: toUtcIso(e),
+            recurrence_ends_at: last ? toUtcIso(last.end) : null,
+          }, scheduleChanged)
+        } else {
+          const at = inTz(event.original_start!, timeZone)
+          const { s, e } = schedule(at)
+          const { before, after } = splitRule(masterStart, masterEnd, rule, timeZone, at)
+          const last = lastOccurrence(s, e, after, timeZone)
+          await splitSeries({
+            seriesId: master.id,
+            splitAt: toUtcIso(at),
+            before: before && { rule: before.rule, endsAt: toUtcIso(before.endsAt) },
+            next: {
+              title, notes: fields.notes, color, all_day: allDay,
+              starts_at: toUtcIso(s), ends_at: toUtcIso(e),
+              recurrence: after, recurrence_ends_at: last ? toUtcIso(last.end) : null,
+            },
+            dropExceptions: scheduleChanged,
+          })
+        }
+      } else if (event && inSeries) {
+        await saveOccurrence(event, fields)
       } else if (event) {
         await updateEvent(event.id, fields)
       } else if (repeat === 'none') {
@@ -107,27 +162,22 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
           setError('Pick at least one day of the week.')
           return
         }
-        // One row per occurrence, tied together by series_id; wall-clock time is kept across DST
+        // One row holds the whole series: the first event plus the rule. The calendar generates the
+        // rest (wall-clock time is kept across DST).
         const base = repeatBase()!
-        // "Never ends": a year of events now (the app adds more later); the stored rule has no end
-        const stored: Recurrence = never
-          ? { ...base, never: true, anchor: { start: toUtcIso(startDate), end: toUtcIso(endDate) } }
+        const rule: Recurrence = never
+          ? { ...base, never: true }
           : { ...base, ...(endMode === 'until' ? { until: repeatUntil } : { count }) }
-        const rule: Recurrence = never ? { ...stored, until: horizonDate(timeZone) } : stored
-        const list = occurrences(startDate, endDate, rule, timeZone)
-        if (!list) {
-          setError(`That would create more than ${MAX_OCCURRENCES} events. Shorten the repetition.`)
-          return
+        let endsAt: string | null = null
+        if (!never) {
+          const last = lastOccurrence(startDate, endDate, rule, timeZone)
+          if (!last) {
+            setError('No events fall before the end date.')
+            return
+          }
+          endsAt = toUtcIso(last.end)
         }
-        if (list.length === 0) {
-          setError('No events fall before the end date.')
-          return
-        }
-        const series_id = crypto.randomUUID()
-        await createEvents(list.map((o) => ({
-          ...fields, series_id, recurrence: stored,
-          starts_at: toUtcIso(o.start), ends_at: toUtcIso(o.end),
-        })))
+        await createSeries(fields, rule, endsAt)
       }
       onDone()
     } catch (err) {
@@ -151,17 +201,34 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
     repeatSummary = describeRule(rule)
     if (!never && (rule.until || rule.count) && !isNaN(startPreview.getTime())) {
       const n = occurrences(startPreview, startPreview, rule, timeZone)?.length
-      repeatSummary += n === undefined ? ` · over ${MAX_OCCURRENCES} events` : ` · ${n} ${n === 1 ? 'event' : 'events'}`
+      repeatSummary += n == null ? ` · over ${MAX_REPEATS} events` : ` · ${n} ${n === 1 ? 'event' : 'events'}`
     }
   }
 
   async function handleDelete() {
     if (!event) return
-    const all = inSeries && scope === 'all'
-    if (!confirm(all ? `Delete every event in the series "${event.title}"?` : `Delete "${event.title}"?`)) return
+    const which = inSeries ? scope : 'one'
+    const question = which === 'all' ? `Delete every event in the series "${event.title}"?`
+      : which === 'following' ? `Delete "${event.title}" and all the events after it?`
+      : `Delete "${event.title}"?`
+    if (!confirm(question)) return
     try {
-      if (all) await deleteSeries(event.series_id!)
-      else await deleteEvent(event.id)
+      if (!inSeries) await deleteEvent(event.id)
+      else if (scope === 'one') await cancelOccurrence(event)
+      else if (scope === 'all') await deleteSeries(event.series_id!)
+      else {
+        const master = event.master!
+        const at = inTz(event.original_start!, timeZone)
+        const { before } = splitRule(
+          inTz(master.starts_at, timeZone), inTz(master.ends_at, timeZone),
+          master.recurrence as unknown as Recurrence, timeZone, at,
+        )
+        await splitSeries({
+          seriesId: master.id, splitAt: toUtcIso(at),
+          before: before && { rule: before.rule, endsAt: toUtcIso(before.endsAt) },
+          next: null, dropExceptions: true,
+        })
+      }
       onDone()
     } catch (err) {
       setError((err as Error).message)
@@ -206,13 +273,14 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
             <div className="scope">
               <label className="check"><input type="radio" name="scope" checked={scope === 'one'}
                 onChange={() => setScope('one')} /> This event</label>
+              <label className="check"><input type="radio" name="scope" checked={scope === 'following'}
+                onChange={() => setScope('following')} /> This and following events</label>
               <label className="check"><input type="radio" name="scope" checked={scope === 'all'}
                 onChange={() => setScope('all')} /> All events in the series</label>
             </div>
-            {scope === 'all' && <small className="hint">Times can only be changed one event at a time.</small>}
           </div>
         )}
-        <fieldset className="plain" disabled={inSeries && scope === 'all'}>
+        <fieldset className="plain">
         <label className="check">
           <input type="checkbox" checked={allDay}
             onChange={(e) => setAllDay(e.target.checked)} /> All day
@@ -319,13 +387,12 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
                     ) : (
                       <label className="field">
                         <span>Events</span>
-                        <input type="number" min={1} max={MAX_OCCURRENCES} required value={repeatCount}
+                        <input type="number" min={1} max={MAX_REPEATS} required value={repeatCount}
                           onChange={(e) => setRepeatCount(e.target.value)} />
                       </label>
                     )}
                   </div>
                 )}
-                {never && <small className="hint">Events are created a year ahead and added automatically as time passes.</small>}
               </>
             )}
             {repeatSummary && <p className="repeat-summary">{'↻'} {repeatSummary}</p>}

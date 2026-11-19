@@ -1,7 +1,7 @@
 import { useSession } from './hooks/useSession'
 import { SignIn } from './components/SignIn'
 import { useCallback, useEffect, useState } from 'react'
-import { extendOpenSeries, getProfile, type Profile as ProfileRow } from './lib/api'
+import { getProfile, type Profile as ProfileRow } from './lib/api'
 import type { TimeFormat } from './lib/timeFormat'
 import { resolveTimeZone } from './lib/tz'
 import { Profile } from './components/Profile'
@@ -35,12 +35,6 @@ export default function App() {
   useEffect(() => {
     if (userId) loadProfile(userId)
   }, [userId, loadProfile])
-
-  // Keep "never ends" repeating events filled a year ahead
-  const profileReady = !!profile
-  useEffect(() => {
-    if (userId && profileReady) extendOpenSeries(timeZone).catch((e) => console.error('Could not extend repeating events:', e))
-  }, [userId, profileReady, timeZone])
 
   if (loading) return <p className="loading">Loading…</p>
   if (!session) return <SignIn />

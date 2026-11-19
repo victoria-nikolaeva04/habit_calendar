@@ -43,7 +43,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
 
   useEffect(() => {
     let cancelled = false
-    getEvents(weekStart, endOfWeek(weekStart, opts))
+    getEvents(weekStart, endOfWeek(weekStart, opts), timeZone)
       .then((data) => {
         if (cancelled) return
         setEvents(data)
@@ -53,7 +53,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [weekStart, reloadKey, opts])
+  }, [weekStart, reloadKey, opts, timeZone])
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
