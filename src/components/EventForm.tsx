@@ -1,24 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { addDays, addHours, addMonths, differenceInCalendarDays, endOfDay, format, set, setHours, startOfDay } from 'date-fns'
+import { addDays, addHours, differenceInCalendarDays, endOfDay, format, set, setHours, startOfDay } from 'date-fns'
 import { inTz, toUtcIso, wallTime } from '../lib/tz'
 import {
   cancelOccurrence, createEvents, createSeries, deleteEvent, deleteSeries, saveOccurrence, splitSeries,
   updateEvent, updateSeries, type CalendarEvent,
 } from '../lib/api'
-import {
-  MAX_REPEATS, describeRule, lastOccurrence, occurrences, splitRule, type Freq, type Recurrence,
-} from '../lib/recurrence'
-
-// The dropdown choices, like Google Calendar: presets named after the start date, plus Custom
-type Repeat = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekdays' | 'custom'
-const UNITS: { value: Freq; one: string; many: string }[] = [
-  { value: 'daily', one: 'day', many: 'days' },
-  { value: 'weekly', one: 'week', many: 'weeks' },
-  { value: 'monthly', one: 'month', many: 'months' },
-  { value: 'yearly', one: 'year', many: 'years' },
-]
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+import { describeRule, lastOccurrence, splitRule, type Recurrence } from '../lib/recurrence'
+import { initialRepeat, repeatError, repeatRule } from '../lib/repeat'
+import { RepeatPicker } from './RepeatPicker'
 
 const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#64748b']
 
@@ -41,26 +30,12 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
   const [allDay, setAllDay] = useState(event?.all_day ?? false)
   const [notes, setNotes] = useState(event?.notes ?? '')
   const [color, setColor] = useState<string | null>(event?.color ?? null)
-  const [repeat, setRepeat] = useState<Repeat>('none')
-  const [repeatUntil, setRepeatUntil] = useState('')
-  const [endMode, setEndMode] = useState<'until' | 'count'>('until')
-  const [repeatCount, setRepeatCount] = useState('10')
-  const [never, setNever] = useState(false)
-  const [interval, setIntervalValue] = useState('1')
-  const [unit, setUnit] = useState<Freq>('weekly')
-  const [repeatDays, setRepeatDays] = useState<number[]>([defaultStart.getDay()])
+  const [rep, setRep] = useState(() => initialRepeat(defaultStart.getDay()))
   // Editing one occurrence of a series: change just this one, this and the ones after it, or the whole series
   const inSeries = !!event?.series_id
   const [scope, setScope] = useState<'one' | 'following' | 'all'>('one')
   const initialDay = event ? format(inTz(event.starts_at, timeZone), 'yyyy-MM-dd') : ''
   const [error, setError] = useState<string | null>(null)
-
-  // The chosen repeat pattern, without its end
-  const repeatBase = (): Recurrence | null =>
-    repeat === 'none' ? null
-    : repeat === 'custom' ? { freq: unit, interval: Math.floor(Number(interval)) || 1, ...(unit === 'weekly' && { days: repeatDays }) }
-    : repeat === 'weekdays' ? { freq: 'weekly', days: [1, 2, 3, 4, 5] }
-    : { freq: repeat }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -141,35 +116,19 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
         await saveOccurrence(event, fields)
       } else if (event) {
         await updateEvent(event.id, fields)
-      } else if (repeat === 'none') {
+      } else if (!repeatRule(rep)) {
         await createEvents([fields])
       } else {
-        const n = Math.floor(Number(interval))
-        if (repeat === 'custom' && !(n >= 1)) {
-          setError('Repeat every must be 1 or more.')
-          return
-        }
-        if (!never && endMode === 'until' && !repeatUntil) {
-          setError('Please choose when the repetition ends.')
-          return
-        }
-        const count = Math.floor(Number(repeatCount))
-        if (!never && endMode === 'count' && !(count >= 1)) {
-          setError('Number of events must be 1 or more.')
-          return
-        }
-        if (repeat === 'custom' && unit === 'weekly' && repeatDays.length === 0) {
-          setError('Pick at least one day of the week.')
+        const repeatProblem = repeatError(rep, 'events')
+        if (repeatProblem) {
+          setError(repeatProblem)
           return
         }
         // One row holds the whole series: the first event plus the rule. The calendar generates the
         // rest (wall-clock time is kept across DST).
-        const base = repeatBase()!
-        const rule: Recurrence = never
-          ? { ...base, never: true }
-          : { ...base, ...(endMode === 'until' ? { until: repeatUntil } : { count }) }
+        const rule = repeatRule(rep)!
         let endsAt: string | null = null
-        if (!never) {
+        if (!rule.never) {
           const last = lastOccurrence(startDate, endDate, rule, timeZone)
           if (!last) {
             setError('No events fall before the end date.')
@@ -185,25 +144,7 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
     }
   }
 
-  // Labels for the presets, named after the current start date (may be invalid while the field is being edited)
-  const startPreview = wallTime(start, timeZone)
-  const startLabel = (f: string) => (isNaN(startPreview.getTime()) ? '…' : format(startPreview, f))
-
-  // Plain-English summary of what will be created, e.g. "Every 2 weeks on Mon, Wed, until Dec 31, 2026 · 14 events"
-  let repeatSummary: string | null = null
-  const previewBase = repeatBase()
-  if (previewBase) {
-    const count = Math.floor(Number(repeatCount))
-    const rule: Recurrence = {
-      ...previewBase,
-      ...(never ? { never: true } : endMode === 'until' ? (repeatUntil ? { until: repeatUntil } : {}) : count >= 1 ? { count } : {}),
-    }
-    repeatSummary = describeRule(rule)
-    if (!never && (rule.until || rule.count) && !isNaN(startPreview.getTime())) {
-      const n = occurrences(startPreview, startPreview, rule, timeZone)?.length
-      repeatSummary += n == null ? ` · over ${MAX_REPEATS} events` : ` · ${n} ${n === 1 ? 'event' : 'events'}`
-    }
-  }
+  const startPreview = wallTime(start, timeZone) // may be invalid while the field is being edited
 
   async function handleDelete() {
     if (!event) return
@@ -311,93 +252,7 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
           </label>
         </div>
         </fieldset>
-        {!event && (
-          <div className="repeat-box">
-            <label className="field">
-              <span>Repeat</span>
-              <select value={repeat} onChange={(e) => {
-                const r = e.target.value as Repeat
-                setRepeat(r)
-                if (r !== 'none' && !repeatUntil && !isNaN(startPreview.getTime())) {
-                  setRepeatUntil(format(addMonths(startPreview, 3), 'yyyy-MM-dd'))
-                }
-              }}>
-                <option value="none">Does not repeat</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">{`Weekly on ${startLabel('EEEE')}`}</option>
-                <option value="monthly">{`Monthly on day ${startLabel('d')}`}</option>
-                <option value="yearly">{`Annually on ${startLabel('MMMM d')}`}</option>
-                <option value="weekdays">Every weekday (Monday to Friday)</option>
-                <option value="custom">Custom…</option>
-              </select>
-            </label>
-            {repeat === 'custom' && (
-              <div className="custom-repeat">
-                <div className="field-row">
-                  <label className="field">
-                    <span>Repeat every</span>
-                    <input type="number" min={1} max={999} required value={interval}
-                      onChange={(e) => setIntervalValue(e.target.value)} />
-                  </label>
-                  <label className="field">
-                    <span>Unit</span>
-                    <select value={unit} onChange={(e) => setUnit(e.target.value as Freq)}>
-                      {UNITS.map((u) => (
-                        <option key={u.value} value={u.value}>{Number(interval) === 1 ? u.one : u.many}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                {unit === 'weekly' && (
-                  <div className="field">
-                    <span>Repeat on</span>
-                    <div className="weekdays" role="group" aria-label="Repeat on">
-                      {WEEKDAYS.map((l, d) => (
-                        <button key={d} type="button" aria-pressed={repeatDays.includes(d)} aria-label={WEEKDAY_NAMES[d]}
-                          className={`weekday${repeatDays.includes(d) ? ' selected' : ''}`}
-                          onClick={() => setRepeatDays((cur) => cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d])}>
-                          {l}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            {repeat !== 'none' && (
-              <>
-                <label className="check">
-                  <input type="checkbox" checked={never} onChange={(e) => setNever(e.target.checked)} /> Never ends
-                </label>
-                {!never && (
-                  <div className="field-row">
-                    <label className="field">
-                      <span>Ends</span>
-                      <select value={endMode} onChange={(e) => setEndMode(e.target.value as 'until' | 'count')}>
-                        <option value="until">On date</option>
-                        <option value="count">After a number of events</option>
-                      </select>
-                    </label>
-                    {endMode === 'until' ? (
-                      <label className="field">
-                        <span>End date</span>
-                        <input type="date" required value={repeatUntil} min={start.slice(0, 10)}
-                          onChange={(e) => setRepeatUntil(e.target.value)} />
-                      </label>
-                    ) : (
-                      <label className="field">
-                        <span>Events</span>
-                        <input type="number" min={1} max={MAX_REPEATS} required value={repeatCount}
-                          onChange={(e) => setRepeatCount(e.target.value)} />
-                      </label>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-            {repeatSummary && <p className="repeat-summary">{'↻'} {repeatSummary}</p>}
-          </div>
-        )}
+        {!event && <RepeatPicker state={rep} onChange={setRep} start={startPreview} zone={timeZone} noun="events" />}
         <label className="field">
           <span>Notes</span>
           <textarea rows={3} placeholder="Optional notes" value={notes}
