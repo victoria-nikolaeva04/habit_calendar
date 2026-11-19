@@ -131,12 +131,105 @@ export type Database = {
         }
         Relationships: []
       }
+      task_lists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          cancelled: boolean
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          due_time: string | null
+          id: string
+          list_id: string | null
+          notes: string | null
+          original_date: string | null
+          parent_id: string | null
+          recurrence: Json | null
+          recurrence_ends_on: string | null
+          series_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          cancelled?: boolean
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          list_id?: string | null
+          notes?: string | null
+          original_date?: string | null
+          parent_id?: string | null
+          recurrence?: Json | null
+          recurrence_ends_on?: string | null
+          series_id?: string | null
+          title: string
+          user_id?: string
+        }
+        Update: {
+          cancelled?: boolean
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          list_id?: string | null
+          notes?: string | null
+          original_date?: string | null
+          parent_id?: string | null
+          recurrence?: Json | null
+          recurrence_ends_on?: string | null
+          series_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       delete_own_account: { Args: never; Returns: undefined }
+      tasks_in_range: {
+        Args: { range_start: string; range_end: string }
+        Returns: Database['public']['Tables']['tasks']['Row'][]
+      }
+      update_task_series: {
+        Args: { p_series: string; p_fields: Json }
+        Returns: undefined
+      }
+      split_task_series: {
+        Args: {
+          p_series: string
+          p_split_on: string
+          p_old_rule: Json | null
+          p_old_ends_on: string | null
+          p_new: Json | null
+        }
+        Returns: string
+      }
       events_in_range: {
         Args: { range_start: string; range_end: string }
         Returns: Database['public']['Tables']['events']['Row'][]
