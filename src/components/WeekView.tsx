@@ -20,10 +20,16 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
   // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
   const [anchor, setAnchor] = useState(() => nowIn(timeZone))
+  // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    if (jump) setAnchor(inTz(jump.date, timeZone))
+  }
   const weekStart = useMemo(() => startOfWeek(anchor, opts), [anchor, opts])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)

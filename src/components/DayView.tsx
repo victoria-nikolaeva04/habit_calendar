@@ -15,8 +15,14 @@ import { useNow } from '../hooks/useNow'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
-export function DayView({ timeFormat = '12h', timeZone, holidayCountry }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
+export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
   const [day, setDay] = useState(() => startOfDay(nowIn(timeZone)))
+  // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    if (jump) setDay(startOfDay(jump.date))
+  }
   const dayHolidays = useHolidays(holidayCountry, day, day).get(format(day, 'yyyy-MM-dd')) ?? []
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)

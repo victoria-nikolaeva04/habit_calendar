@@ -8,6 +8,7 @@ import { Profile } from './components/Profile'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
+import { SearchBox } from './components/SearchBox'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
@@ -16,6 +17,7 @@ export default function App() {
   const { session, loading } = useSession()
   const [view, setView] = useState<View>('month')
   const [showProfile, setShowProfile] = useState(false)
+  const [jump, setJump] = useState<{ date: Date } | null>(null) // set when a search result asks to show a date
   const [loaded, setProfile] = useState<ProfileRow | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
   const userId = session?.user.id
@@ -51,6 +53,7 @@ export default function App() {
               <option key={v} value={v}>{v[0].toUpperCase() + v.slice(1)}</option>
             ))}
           </select>
+          <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={(date) => setJump({ date })} />
           <button className="profile-btn" disabled={!profile}
             title={profile ? undefined : 'Loading your profile…'}
             onClick={() => setShowProfile(true)}>Profile</button>
@@ -62,9 +65,9 @@ export default function App() {
           </p>
         )}
         {/* key: switching time zone restarts the view at "today" in the new zone */}
-        {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
-        {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
-        {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
+        {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
+        {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
+        {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} />}
       </div>
     </>
   )

@@ -946,3 +946,84 @@ button:disabled {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* ---------- Search ---------- */
+
+.search {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+}
+
+.search input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-results {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 18%);
+}
+
+.search-results ul {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+}
+
+.search-results li button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.search-results li button:hover,
+.search-results li button:focus-visible {
+  background: var(--surface-muted);
+}
+
+.search-results .search-dot {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+}
+
+.search-results .search-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.search-results .search-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-results .search-text small,
+.search-results .search-note {
+  color: var(--text-muted);
+}
+
+.search-results .search-note {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+}

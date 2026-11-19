@@ -108,6 +108,22 @@ export function lastOccurrence(start: Date, end: Date, rule: Recurrence, timeZon
   return last && { start: last, end: endOf(last, start, end) }
 }
 
+// The occurrence to show for a series in a list: the first one still running or ahead of `after` that `skip`
+// doesn't exclude (e.g. deleted ones), or else the last one. Undefined if there is none.
+export function upcomingOccurrence(
+  start: Date, end: Date, rule: Recurrence, timeZone: string, after: Date, skip: (start: Date) => boolean,
+): Occurrence | undefined {
+  const lookback = addDays(after, -(differenceInCalendarDays(end, start) + 1))
+  let tries = 0
+  for (const s of starts(start, rule, timeZone, lookback)) {
+    if (++tries > 1000) break
+    const e = endOf(s, start, end)
+    if (e > after && !skip(s)) return { start: s, end: e }
+  }
+  const last = lastOccurrence(start, end, rule, timeZone)
+  return last && !skip(last.start) ? last : undefined
+}
+
 // Splits a series at the occurrence starting at `at` (a zoned date) for "this and following events":
 //   before: the rule for the part before it (ends the day before), with its end
 //           (null = nothing left before `at`, so the old series goes away)

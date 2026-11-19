@@ -39,8 +39,14 @@ function gridRange(month: Date, weekStartsOn: WeekDay) {
   }
 }
 
-export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null }) {
   const [month, setMonth] = useState(() => startOfMonth(nowIn(timeZone)))
+  // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    if (jump) setMonth(startOfMonth(jump.date))
+  }
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date } | null>(null)
