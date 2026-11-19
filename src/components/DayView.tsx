@@ -7,14 +7,17 @@ import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
+import { useHolidays } from '../hooks/useHolidays'
+import { HolidayChip } from './HolidayChip'
 import { inTz, nowIn } from '../lib/tz'
 import { HOUR_PX, layoutTimed, slotAt } from '../lib/dayLayout'
 import { useNow } from '../hooks/useNow'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
-export function DayView({ timeFormat = '12h', timeZone }: { timeFormat?: TimeFormat; timeZone: string }) {
+export function DayView({ timeFormat = '12h', timeZone, holidayCountry }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
   const [day, setDay] = useState(() => startOfDay(nowIn(timeZone)))
+  const dayHolidays = useHolidays(holidayCountry, day, day).get(format(day, 'yyyy-MM-dd')) ?? []
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
@@ -70,6 +73,7 @@ export function DayView({ timeFormat = '12h', timeZone }: { timeFormat?: TimeFor
             onClick={() => setEditing({ day })}
             onKeyDown={activate(() => setEditing({ day }))}
           >
+            {dayHolidays.map((h) => <HolidayChip key={h.name} holiday={h} />)}
             {allDay.map((e) => (
               <div
                 key={e.id}

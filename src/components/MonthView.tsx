@@ -11,6 +11,8 @@ import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
+import { useHolidays } from '../hooks/useHolidays'
+import { HolidayChip } from './HolidayChip'
 import { inTz, nowIn } from '../lib/tz'
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -22,10 +24,10 @@ const MORE_PX = 22         // the "+N more" button
 const sizes = (compact: boolean) => ({ chip: compact ? 19 : 28, pad: compact ? 6.4 : 16 })
 
 // How many of `total` events fit in a cell `cellH` px tall (leaving room for "+N more" if some are cut)
-function fitCount(total: number, cellH: number, compact: boolean) {
+function fitCount(total: number, cellH: number, compact: boolean, reserved = 0) {
   if (!cellH) return Math.min(total, FALLBACK_VISIBLE)
   const { chip, pad } = sizes(compact)
-  const avail = cellH - pad - NUMBER_PX
+  const avail = cellH - pad - NUMBER_PX - reserved * chip
   if (total * chip <= avail) return total
   return Math.max(0, Math.floor((avail - MORE_PX) / chip))
 }
@@ -37,7 +39,7 @@ function gridRange(month: Date, weekStartsOn: WeekDay) {
   }
 }
 
-export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string }) {
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
   const [month, setMonth] = useState(() => startOfMonth(nowIn(timeZone)))
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +48,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { 
   const [reloadKey, setReloadKey] = useState(0)
   const { start, end } = gridRange(month, weekStartsOn)
   const days = eachDayOfInterval({ start, end })
+  const holidays = useHolidays(holidayCountry, start, end)
 
   // Track the day-cell height so we show as many events as fit instead of a fixed number
   const gridRef = useRef<HTMLDivElement>(null)
@@ -93,7 +96,8 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { 
         {days.map((day) => {
           const dayEvents = eventsOn(day, events)
           const isExpanded = expanded === day.getTime()
-          const visible = isExpanded ? dayEvents : dayEvents.slice(0, fitCount(dayEvents.length, cellH, compact))
+          const dayHolidays = holidays.get(format(day, 'yyyy-MM-dd')) ?? []
+          const visible = isExpanded ? dayEvents : dayEvents.slice(0, fitCount(dayEvents.length, cellH, compact, dayHolidays.length))
           const hidden = dayEvents.length - visible.length
           return (
             <div
@@ -111,6 +115,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { 
               onKeyDown={activate(() => setEditing({ day }))}
             >
               <span className="day-number">{format(day, 'd')}</span>
+              {dayHolidays.map((h) => <HolidayChip key={h.name} holiday={h} />)}
               {visible.map((e) => {
                 // Multi-day events show their start time only on the day they begin
                 const startsToday = isSameDay(inTz(e.starts_at, timeZone), day)

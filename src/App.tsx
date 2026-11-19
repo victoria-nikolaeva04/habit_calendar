@@ -23,6 +23,7 @@ export default function App() {
   const weekStartsOn = (profile?.week_start_on ?? 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6
   const timeFormat: TimeFormat = profile?.time_format === '24h' ? '24h' : '12h'
   const timeZone = resolveTimeZone(profile?.timezone)
+  const holidayCountry = profile?.holiday_country ?? null
 
   const loadProfile = useCallback((id: string) => {
     getProfile(id)
@@ -67,9 +68,9 @@ export default function App() {
           </p>
         )}
         {/* key: switching time zone restarts the view at "today" in the new zone */}
-        {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} />}
-        {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} />}
-        {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} />}
+        {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
+        {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
+        {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} />}
       </div>
     </>
   )

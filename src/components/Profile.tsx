@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { getCountries, type Country } from '../lib/holidays'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { browserTimeZone } from '../lib/tz'
@@ -19,11 +20,24 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
   const [timezone, setTimezone] = useState(profile.timezone)
   const [weekStart, setWeekStart] = useState(profile.week_start_on)
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(profile.time_format === '24h' ? '24h' : '12h')
+  const [holidayCountry, setHolidayCountry] = useState(profile.holiday_country ?? '')
+  const [countries, setCountries] = useState<Country[]>([])
+  const [countriesFailed, setCountriesFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  useEffect(() => {
+    getCountries().then(setCountries).catch(() => setCountriesFailed(true))
+  }, [])
+
+  // Keep the saved country selectable even before (or without) the list loading
+  const countryOptions = countries.some((c) => c.countryCode === holidayCountry) || !holidayCountry
+    ? countries
+    : [{ countryCode: holidayCountry, name: holidayCountry }, ...countries]
+
   const dirty =
+    holidayCountry !== (profile.holiday_country ?? '') ||
     displayName.trim() !== (profile.display_name ?? '') ||
     timezone !== profile.timezone ||
     weekStart !== profile.week_start_on ||
@@ -48,6 +62,7 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
         timezone,
         week_start_on: weekStart,
         time_format: timeFormat,
+        holiday_country: holidayCountry || null,
       })
       onSaved(updated)
       setSaved(true)
@@ -103,6 +118,14 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
               <option value="12h">12-hour (9:30 AM)</option>
               <option value="24h">24-hour / military (09:30)</option>
             </select>
+          </label>
+          <label className="field">
+            <span>Public holidays</span>
+            <select value={holidayCountry} onChange={(e) => { setHolidayCountry(e.target.value); setSaved(false) }}>
+              <option value="">Don't show holidays</option>
+              {countryOptions.map((c) => <option key={c.countryCode} value={c.countryCode}>{c.name}</option>)}
+            </select>
+            {countriesFailed && <small className="hint">Couldn't load the country list. Try again later.</small>}
           </label>
           {error && <p role="alert" className="form-error">{error}</p>}
           {saved && <p role="status" className="form-success">Saved</p>}

@@ -10,6 +10,8 @@ import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
+import { useHolidays } from '../hooks/useHolidays'
+import { HolidayChip } from './HolidayChip'
 import { inTz, nowIn } from '../lib/tz'
 import { HOUR_PX, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
 import { useNow } from '../hooks/useNow'
@@ -18,7 +20,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
   // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
   const [anchor, setAnchor] = useState(() => nowIn(timeZone))
@@ -28,6 +30,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { w
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, opts) })
+  const holidays = useHolidays(holidayCountry, days[0], days[6])
   const scrollRef = useRef<HTMLDivElement>(null)
   const nowInZone = inTz(useNow(), timeZone)
   const nowTop = ((nowInZone.getHours() * 60 + nowInZone.getMinutes()) / 60) * HOUR_PX
@@ -90,6 +93,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone }: { w
               onClick={() => setEditing({ day })}
               onKeyDown={activate(() => setEditing({ day }))}
             >
+              {(holidays.get(format(day, 'yyyy-MM-dd')) ?? []).map((h) => <HolidayChip key={h.name} holiday={h} />)}
               {eventsOn(day, events).filter((e) => e.all_day).map((e) => (
                 <div
                   key={e.id}

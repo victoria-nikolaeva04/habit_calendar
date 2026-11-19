@@ -85,6 +85,7 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          holiday_country: string | null
           id: string
           time_format: string
           timezone: string
@@ -94,6 +95,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_name?: string | null
+          holiday_country?: string | null
           id: string
           time_format?: string
           timezone?: string
@@ -103,6 +105,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_name?: string | null
+          holiday_country?: string | null
           id?: string
           time_format?: string
           timezone?: string
