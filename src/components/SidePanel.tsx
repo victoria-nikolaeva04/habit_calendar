@@ -6,7 +6,7 @@ import { eventStyle } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
 import { inTz, nowIn, toUtcIso } from '../lib/tz'
-import { ALL_LISTS, DEFAULT_LIST, DEFAULT_LIST_NAME, dayKey } from '../lib/tasks'
+import { ALL_LISTS, DEFAULT_LIST, DEFAULT_LIST_NAME, dayKey, isDone } from '../lib/tasks'
 import { useHolidays } from '../hooks/useHolidays'
 import { HolidayChip } from './HolidayChip'
 import { EventPopup } from './EventPopup'
@@ -94,6 +94,7 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
   const overdue = backlog.filter((t) => t.due_date !== null && t.due_date !== key)
   const undated = backlog.filter((t) => t.due_date === null)
   const hasTasks = dayTasks.length + backlog.length > 0
+  const openCount = [...dayTasks, ...backlog].filter((t) => !isDone(t)).length
   const taskRow = (t: Task) => (
     <li key={t.id}>
       <TaskChip task={t} timeFormat={timeFormat} variant="row"
@@ -106,21 +107,23 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
 
   return (
     <aside className="side-panel" aria-label="Day details">
-      <header className="panel-header">
-        <button aria-label="Previous day" onClick={() => onGoTo(addDays(day, -1))}>‹</button>
-        <h2>
-          {isToday(day) && <span className="today-dot" title="Today" />}
-          {format(day, 'EEE, MMM d')}
-        </h2>
-        <button aria-label="Next day" onClick={() => onGoTo(addDays(day, 1))}>›</button>
-      </header>
-
-      {/* Sections: add new ones below (or above) this one; the panel scrolls when they don't fit */}
-      <div className="panel-body">
+      {/* Cards: add new ones below (or above) these; the panel scrolls when they don't fit */}
+      <div className="panel-card">
+        <header className="panel-header">
+          <div className="panel-date">
+            <span className="panel-weekday">{format(day, 'EEEE')}</span>
+            <h2>
+              {isToday(day) && <span className="today-dot" title="Today" />}
+              {format(day, 'MMMM d')}
+            </h2>
+          </div>
+          <button className="icon-btn" aria-label="Previous day" onClick={() => onGoTo(addDays(day, -1))}>‹</button>
+          <button className="icon-btn" aria-label="Next day" onClick={() => onGoTo(addDays(day, 1))}>›</button>
+        </header>
         <section className="panel-section" aria-labelledby="panel-events-title">
           <div className="panel-section-head">
-            <h3 id="panel-events-title">Events</h3>
-            <button type="button" onClick={() => setEditing({ day })}>+ Add</button>
+            <h3 id="panel-events-title">Schedule</h3>
+            <button type="button" className="icon-btn" aria-label="Add event" onClick={() => setEditing({ day })}>+</button>
           </div>
           {holidays.map((h) => <HolidayChip key={h.name} holiday={h} />)}
           {error && <p role="alert">{error}</p>}
@@ -142,11 +145,14 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
             ))}
           </ul>
         </section>
+      </div>
 
+      <div className="panel-card">
         <section className="panel-section" aria-labelledby="panel-tasks-title">
           <div className="panel-section-head">
             <h3 id="panel-tasks-title">Tasks</h3>
-            <button type="button" onClick={() => setEditingTask({ day })}>+ Add</button>
+            {tasksLoaded && <span className="panel-count">{openCount} open</span>}
+            <button type="button" className="icon-btn" aria-label="Add task" onClick={() => setEditingTask({ day })}>+</button>
           </div>
           <div className="panel-list-bar">
             <select aria-label="Task list" value={listFilter} onChange={(e) => onListFilter(e.target.value)}>
@@ -159,7 +165,7 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
           {tasksError && <p role="alert">{tasksError}</p>}
           {overdue.length > 0 && (
             <>
-              <h4 className="panel-subhead">Overdue</h4>
+              <h4 className="panel-subhead overdue">Overdue</h4>
               <ul className="panel-tasks">{overdue.map(taskRow)}</ul>
             </>
           )}
