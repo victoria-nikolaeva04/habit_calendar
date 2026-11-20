@@ -18,9 +18,6 @@ export function textOn(hex: string) {
 // Colors for an event chip; null/invalid color falls back to the stylesheet's default look
 export function eventStyle(color: string | null): CSSProperties {
   if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return {}
-  return {
-    background: color,
-    color: textOn(color),
-    borderLeftColor: `color-mix(in srgb, ${color} 65%, black)`,
-  }
+  // The stylesheet tints the chip from this color (dark tinted background, lighter text, colored accent)
+  return { '--ev': color } as CSSProperties
 }

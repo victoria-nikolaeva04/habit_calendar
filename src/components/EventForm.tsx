@@ -9,7 +9,7 @@ import { describeRule, lastOccurrence, splitRule, type Recurrence } from '../lib
 import { initialRepeat, repeatError, repeatRule } from '../lib/repeat'
 import { RepeatPicker } from './RepeatPicker'
 
-const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#64748b']
+const COLORS = ['#5b6cff', '#ffa95c', '#38bdf8', '#34d399', '#f87171', '#f472b6', '#a78bfa', '#64748b']
 
 // <input type="datetime-local"> wants "2026-11-13T09:00"; `d` must already be in the profile time zone
 const toInput = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm")
