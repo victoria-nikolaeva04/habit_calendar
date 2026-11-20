@@ -28,8 +28,9 @@ export function eventsOn(day: Date, events: CalendarEvent[]) {
 type Item = { event: CalendarEvent; top: number; height: number; col: number; cols: number }
 
 // Position timed events inside one day column (clamped to that day).
-// Events that overlap in time are placed side by side instead of on top of each other.
-export function layoutTimed(events: CalendarEvent[], day: Date): { event: CalendarEvent; style: CSSProperties }[] {
+// Events that overlap in time are placed side by side, or with `stacked` on top of one another:
+// each later event sits above the earlier ones, shifted in a little so the ones underneath still peek out.
+export function layoutTimed(events: CalendarEvent[], day: Date, stacked = false): { event: CalendarEvent; style: CSSProperties }[] {
   const dayStart = startOfDay(day).getTime()
   const dayEnd = endOfDay(day).getTime()
 
@@ -67,9 +68,20 @@ export function layoutTimed(events: CalendarEvent[], day: Date): { event: Calend
   }
   closeCluster()
 
+  const STACK_INDENT_PX = 12
+  const MAX_INDENT_PX = 36
   return items.map((it) => ({
     event: it.event,
-    style: {
+    style: stacked ? {
+      top: it.top,
+      height: it.height,
+      left: Math.min(it.col * STACK_INDENT_PX, MAX_INDENT_PX) + 2,
+      width: 'auto',
+      right: 2,
+      zIndex: it.col + 1,
+      boxShadow: it.col > 0 ? '-2px 0 6px rgb(0 0 0 / 40%)' : undefined,
+      ...eventStyle(it.event.color),
+    } : {
       top: it.top,
       height: it.height,
       left: `calc(${(it.col / it.cols) * 100}% + 2px)`,

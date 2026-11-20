@@ -24,9 +24,9 @@ type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
 // Approximate pixel sizes of cell contents, used to work out how many events fit in a day cell
 const FALLBACK_VISIBLE = 3 // before the first measurement
-const NUMBER_PX = 32       // the day number circle (2rem)
+const NUMBER_PX = 28       // the day number circle (1.6rem) plus spacing
 const MORE_PX = 22         // the "+N more" button
-const sizes = (compact: boolean) => ({ chip: compact ? 19 : 28, pad: compact ? 6.4 : 16 })
+const sizes = (compact: boolean) => ({ chip: compact ? 19 : 25, pad: compact ? 6.4 : 13 })
 
 // How many of `total` events fit in a cell `cellH` px tall (leaving room for "+N more" if some are cut)
 function fitCount(total: number, cellH: number, compact: boolean, reserved = 0) {
@@ -95,10 +95,10 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
   return (
     <section className="month">
       <header className="month-header">
-        <button aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
-        <h2>{format(month, 'MMMM yyyy')}</h2>
-        <button aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>›</button>
-        <button onClick={() => setMonth(startOfMonth(nowIn(timeZone)))}>Today</button>
+        <h2>{format(month, 'MMMM')} <span className="year">{format(month, 'yyyy')}</span></h2>
+        <button className="today-btn" onClick={() => setMonth(startOfMonth(nowIn(timeZone)))}>Today</button>
+        <button className="nav-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
+        <button className="nav-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>›</button>
       </header>
       {error && <p role="alert">{error}</p>}
 

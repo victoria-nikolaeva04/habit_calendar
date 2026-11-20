@@ -70,16 +70,16 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
-    ? `${format(weekStart, 'MMM d')} – ${format(last, 'd, yyyy')}`
-    : `${format(weekStart, 'MMM d')} – ${format(last, 'MMM d, yyyy')}`
+    ? `${format(weekStart, 'MMM d')} – ${format(last, 'd')}`
+    : `${format(weekStart, 'MMM d')} – ${format(last, 'MMM d')}`
 
   return (
     <section className="month week">
       <header className="month-header">
-        <button aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}>‹</button>
-        <h2>{title}</h2>
-        <button aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}>›</button>
-        <button onClick={() => setAnchor(nowIn(timeZone))}>Today</button>
+        <h2>{title} <span className="year">{format(last, 'yyyy')}</span></h2>
+        <button className="today-btn" onClick={() => setAnchor(nowIn(timeZone))}>Today</button>
+        <button className="nav-btn" aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}>‹</button>
+        <button className="nav-btn" aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}>›</button>
       </header>
       {error && <p role="alert">{error}</p>}
 
@@ -152,7 +152,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
               {HOURS.map((h) => (
                 <div key={h} className="week-hour-line" style={{ top: h * HOUR_PX }} />
               ))}
-              {layoutTimed(eventsOn(day, events).filter((e) => !e.all_day), day).map(({ event: e, style }) => (
+              {layoutTimed(eventsOn(day, events).filter((e) => !e.all_day), day, true).map(({ event: e, style }) => (
                 <div
                   key={e.id}
                   className="event week-event"

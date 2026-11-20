@@ -68,13 +68,13 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
   return (
     <section className="month week">
       <header className="month-header">
-        <button aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}>‹</button>
         <h2>
           {isToday(day) && <span className="today-dot" title="Today" />}
-          {format(day, 'EEEE, MMM d, yyyy')}
+          {format(day, 'EEEE, MMM d')} <span className="year">{format(day, 'yyyy')}</span>
         </h2>
-        <button aria-label="Next day" onClick={() => setDay(addDays(day, 1))}>›</button>
-        <button onClick={() => setDay(startOfDay(nowIn(timeZone)))}>Today</button>
+        <button className="today-btn" onClick={() => setDay(startOfDay(nowIn(timeZone)))}>Today</button>
+        <button className="nav-btn" aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}>‹</button>
+        <button className="nav-btn" aria-label="Next day" onClick={() => setDay(addDays(day, 1))}>›</button>
       </header>
       {error && <p role="alert">{error}</p>}
 
