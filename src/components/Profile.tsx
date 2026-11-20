@@ -81,62 +81,101 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
     }
   }
 
+  const name = displayName.trim() || session.user.email || ''
+  const initials = (name.match(/\b\w/g) ?? ['?']).slice(0, 2).join('').toUpperCase()
+  const touch = () => setSaved(false)
+
   return (
     <div className="profile">
-      <button type="button" onClick={handleBack}>← Back to calendar</button>
-      <h2>Profile</h2>
+      <button type="button" className="back-link" onClick={handleBack}>← Back to calendar</button>
+      <h2>Settings</h2>
+      <p className="subtitle">Manage your profile and how your calendar looks.</p>
       <form onSubmit={handleSave}>
-          <label className="field">
-            <span>Email</span>
+        <section className="card">
+          <div className="identity">
+            <span className="avatar" aria-hidden="true">{initials}</span>
+            <div>
+              <div className="identity-name">{name}</div>
+              <div className="identity-email">{session.user.email}</div>
+            </div>
+          </div>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Display name</span>
+              <span className="row-hint">Shown on shared habits and invites.</span></div>
+            <input value={displayName} placeholder="Your name"
+              onChange={(e) => { setDisplayName(e.target.value); touch() }} />
+          </label>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Email</span>
+              <span className="row-hint">Sign-in links are sent here.</span></div>
             <input value={session.user.email ?? ''} disabled />
           </label>
-          <label className="field">
-            <span>Display name</span>
-            <input value={displayName} placeholder="Your name"
-              onChange={(e) => { setDisplayName(e.target.value); setSaved(false) }} />
-          </label>
-          <label className="field">
-            <span>Time zone</span>
-            <select value={timezone} onChange={(e) => { setTimezone(e.target.value); setSaved(false) }}>
+        </section>
+
+        <section className="card">
+          <h3>Preferences</h3>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Time zone</span>
+              <span className="row-hint">Used for event times and reminders.</span>
+              {timezone !== browserTimeZone() && (
+                <button type="button" className="link-btn"
+                  onClick={(e) => { e.preventDefault(); setTimezone(browserTimeZone()); touch() }}>
+                  Use this device's ({browserTimeZone()})
+                </button>
+              )}
+            </div>
+            <select value={timezone} onChange={(e) => { setTimezone(e.target.value); touch() }}>
               {timezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
             </select>
-            {timezone !== browserTimeZone() && (
-              <button type="button" onClick={() => { setTimezone(browserTimeZone()); setSaved(false) }}>
-                Use this device's time zone ({browserTimeZone()})
-              </button>
-            )}
           </label>
-          <label className="field">
-            <span>Week starts on</span>
-            <select value={weekStart} onChange={(e) => { setWeekStart(Number(e.target.value)); setSaved(false) }}>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Week starts on</span>
+              <span className="row-hint">First column in week and month views.</span></div>
+            <select value={weekStart} onChange={(e) => { setWeekStart(Number(e.target.value)); touch() }}>
               {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
             </select>
           </label>
-          <label className="field">
-            <span>Time format</span>
-            <select value={timeFormat} onChange={(e) => { setTimeFormat(e.target.value as '12h' | '24h'); setSaved(false) }}>
-              <option value="12h">12-hour (9:30 AM)</option>
-              <option value="24h">24-hour / military (09:30)</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>Public holidays</span>
-            <select value={holidayCountry} onChange={(e) => { setHolidayCountry(e.target.value); setSaved(false) }}>
+          <div className="row">
+            <div className="row-text"><span className="row-label">Time format</span>
+              <span className="row-hint">How times appear across the app.</span></div>
+            <div className="segmented" role="radiogroup" aria-label="Time format">
+              {([['12h', '12-hour · 9:30 AM'], ['24h', '24-hour · 09:30']] as const).map(([v, label]) => (
+                <button key={v} type="button" role="radio" aria-checked={timeFormat === v}
+                  className={timeFormat === v ? 'selected' : ''}
+                  onClick={() => { setTimeFormat(v); touch() }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Public holidays</span>
+              <span className="row-hint">Shown as all-day items on your calendar.</span>
+              {countriesFailed && <small className="hint">Couldn't load the country list. Try again later.</small>}
+            </div>
+            <select value={holidayCountry} onChange={(e) => { setHolidayCountry(e.target.value); touch() }}>
               <option value="">Don't show holidays</option>
               {countryOptions.map((c) => <option key={c.countryCode} value={c.countryCode}>{c.name}</option>)}
             </select>
-            {countriesFailed && <small className="hint">Couldn't load the country list. Try again later.</small>}
           </label>
           {error && <p role="alert" className="form-error">{error}</p>}
-          {saved && <p role="status" className="form-success">Saved</p>}
           <div className="form-actions">
-            <button type="submit" className="primary">Save changes</button>
+            {saved && <span role="status" className="form-success">Saved</span>}
+            <button type="submit" className="primary" disabled={!dirty}>Save changes</button>
           </div>
+        </section>
       </form>
-      <section className="account-actions">
+
+      <section className="card account-actions">
         <h3>Account</h3>
-        <button type="button" onClick={() => supabase.auth.signOut()}>Sign out</button>
-        <button type="button" className="danger" onClick={handleDelete}>Delete account</button>
+        <div className="row">
+          <div className="row-text"><span className="row-label">Sign out</span>
+            <span className="row-hint">End your session on this device.</span></div>
+          <button type="button" onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
+        <div className="row">
+          <div className="row-text"><span className="row-label danger-label">Delete account</span>
+            <span className="row-hint">Permanently removes your events, tasks and settings.</span></div>
+          <button type="button" className="danger" onClick={handleDelete}>Delete</button>
+        </div>
         {deleteError && <p role="alert" className="form-error">{deleteError}</p>}
       </section>
     </div>
