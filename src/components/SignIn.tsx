@@ -24,15 +24,15 @@ export function SignIn() {
 
   return (
     <div className="signin">
-      <h1>Habit Calendar</h1>
+      <h1>Sign in to Habit Calendar</h1>
+      <p className="lede">Enter your email and we'll send you a sign-in link. No password needed.</p>
       {status === 'sent' ? (
-        <div role="status">
+        <div role="status" className="card">
           <p>Check <strong>{email}</strong> for your sign-in link.</p>
           <button type="button" onClick={() => setStatus('idle')}>Use a different email</button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          <p>Enter your email and we'll send you a link to sign in. No password needed.</p>
+        <form onSubmit={handleSubmit} className="card">
           <label className="field">
             <span>Email</span>
             <input type="email" required autoFocus autoComplete="email" value={email}
@@ -40,10 +40,11 @@ export function SignIn() {
           </label>
           {error && <p role="alert">{error}</p>}
           <button type="submit" className="primary" disabled={status === 'sending'}>
-            {status === 'sending' ? 'Sending…' : 'Send link'}
+            {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
           </button>
         </form>
       )}
+      <p className="footnote">The link expires after a short time. Check your spam folder if it doesn't arrive.</p>
     </div>
   )
 }
