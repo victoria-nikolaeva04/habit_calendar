@@ -62,6 +62,15 @@ export default function App() {
   const [historyUser, setHistoryUser] = useState(userId)
   if (userId !== historyUser) { setHistoryUser(userId); history.clear() }
 
+  const viewTabs = (
+    <div className="segmented view-tabs" role="tablist" aria-label="View">
+      {VIEWS.map((v) => (
+        <button key={v} type="button" role="tab" aria-selected={view === v}
+          className={view === v ? 'selected' : ''} onClick={() => setView(v)}>{v[0].toUpperCase() + v.slice(1)}</button>
+      ))}
+    </div>
+  )
+
   if (loading) return <p className="loading">Loading…</p>
   if (!session) return <SignIn />
   return (
@@ -72,12 +81,8 @@ export default function App() {
       {/* Kept mounted (just hidden) while the profile is open, so the date you were looking at isn't lost */}
       <div className="calendar-pane" hidden={showProfile && !!profile}>
         <div className="app-bar">
-          <select aria-label="View" value={view} onChange={(e) => setView(e.target.value as View)}>
-            {VIEWS.map((v) => (
-              <option key={v} value={v}>{v[0].toUpperCase() + v.slice(1)}</option>
-            ))}
-          </select>
           <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={goTo} lists={lists} onChanged={changed} />
+          {viewTabs}
           <button className="profile-btn" disabled={!profile}
             aria-label="Profile"
             title={profile ? 'Profile' : 'Loading your profile…'}

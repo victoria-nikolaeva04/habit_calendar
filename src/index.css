@@ -835,8 +835,8 @@ select:focus-visible {
 }
 .profile .danger:hover { background: var(--danger-border); }
 
-.app-bar .profile-btn {
-  margin-left: auto;
+.app-bar .view-tabs {
+  margin-left: auto; /* tabs and profile icon group at the right edge */
 }
 
 /* ---------- Keyboard focus for clickable calendar areas ---------- */
