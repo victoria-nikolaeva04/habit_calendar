@@ -9,12 +9,14 @@ A calendar app to help with habit tracking. Built with React, TypeScript, Vite a
 - **Passwordless sign-in**: enter your email and get a magic link (Supabase Auth).
 - **Month, Week and Day views**: switch between them from the app bar.
 - **Events**: add events from any view. Events can be all-day, have notes and a color, and multi-day events show up across every day they overlap. Click an event to see its details, then use the pencil icon to edit it (the edit form has the Delete button).
+- **Drag to edit events**: drag an event to move it, drag its bottom edge in Week/Day to resize it, or hold Alt/Ctrl while dropping to duplicate it. An undo toast appears after each change, and Ctrl/Cmd+Z undoes the latest one.
 - **Repeating events**: daily, weekly, monthly, annually, every weekday, or a custom rule (every N days/weeks/months/years, with a weekday picker). A series can end on a date, after a number of events, or never. When you edit or delete an event in a series you choose **This event**, **This and following events** or **All events**.
-- **Side panel**: shows the selected day's public holidays, events and tasks. Pick a day by clicking its date number (Month) or heading (Week), or step through days with the panel's arrows.
+- **Side panel**: shows the selected day's public holidays, events and tasks. Pick a day by clicking its date number (Month) or heading (Week), or step through days with the panel's arrows. The **Today** button in each view jumps the calendar and the panel to today.
 - **Tasks**: to-dos with an optional due date and time, details, a checkbox to tick them off, and **subtasks** (a checklist under a task). Tasks appear on their due day in every view and in the side panel, which also lists overdue tasks and tasks with no due date. Tasks can **repeat** with the same rules as events (including this / this and following / all), and can be organised into **lists** ("My Tasks" plus your own) that you can filter by.
 - **Search**: search event and task titles and notes from the app bar; clicking a result jumps the calendar to that date. A repeating event or task is listed once, as its next occurrence.
 - **Public holidays**: pick a country in your profile to show its public holidays on the calendar (from [Nager.Date](https://date.nager.at), no API key needed).
-- **Profile page**:
+- **Light and dark mode**: toggle with the sun/moon icon in the app bar. It follows your system setting until you choose, and remembers your choice on that browser.
+- **Profile page** (person icon in the app bar):
   - Display name
   - Time zone
   - Choose which day the week starts on (affects Month and Week views)
@@ -34,6 +36,7 @@ A series is a single "master" row in `events`: its first start and end plus the 
 - [Supabase](https://supabase.com) (auth + Postgres database)
 - [date-fns](https://date-fns.org) + `@date-fns/tz` for date handling in the profile's time zone
 - [Nager.Date](https://date.nager.at) public holidays API (free, no API key)
+- [lucide-react](https://lucide.dev) for icons
 - ESLint
 
 ## Getting started
@@ -107,6 +110,7 @@ src/
     EventForm.tsx      # Add / edit / delete events, repeat rules and scopes
     HolidayChip.tsx    # Public holiday label on a day
     RepeatMark.tsx     # Marker for events in a series
+    ResizeHandle.tsx   # Drag handle to resize an event
     Profile.tsx        # Profile + account settings
   hooks/
     useSession.ts      # Supabase auth session hook
@@ -114,6 +118,9 @@ src/
     useTasks.ts        # Tasks due in the visible dates
     useTaskLists.ts    # The user's task lists
     useNow.ts          # Current time, for the "now" line
+    useEventDrag.ts    # Drag events to move, resize or duplicate
+    useUndoStack.ts    # Undo history and the Ctrl/Cmd+Z shortcut
+    useTheme.ts        # Light / dark theme, saved in the browser
   lib/
     api.ts             # Event (including series and search) and profile queries
     taskApi.ts         # Task, subtask, list and repeating-task queries
