@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export type Theme = 'light' | 'dark'
 const KEY = 'theme'
@@ -21,6 +21,5 @@ export function useTheme() {
     try { localStorage.setItem(KEY, theme) } catch { /* ignore */ }
   }, [theme])
 
-  const toggle = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])
-  return { theme, toggle }
+  return { theme, setTheme }
 }

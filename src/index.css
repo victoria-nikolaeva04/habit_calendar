@@ -65,7 +65,6 @@
   --scroll-thumb-hover: rgb(0 0 0 / 38%);
 }
 
-.theme-btn,
 .profile-btn {
   padding: 0.5rem 0.75rem;
 }
@@ -836,8 +835,8 @@ select:focus-visible {
 }
 .profile .danger:hover { background: var(--danger-border); }
 
-.app-bar .theme-btn {
-  margin-left: auto; /* pushes the theme and profile icons to the right edge */
+.app-bar .profile-btn {
+  margin-left: auto;
 }
 
 /* ---------- Keyboard focus for clickable calendar areas ---------- */

@@ -15,7 +15,7 @@ A calendar app to help with habit tracking. Built with React, TypeScript, Vite a
 - **Tasks**: to-dos with an optional due date and time, details, a checkbox to tick them off, and **subtasks** (a checklist under a task). Tasks appear on their due day in every view and in the side panel, which also lists overdue tasks and tasks with no due date. Tasks can **repeat** with the same rules as events (including this / this and following / all), and can be organised into **lists** ("My Tasks" plus your own) that you can filter by.
 - **Search**: search event and task titles and notes from the app bar; clicking a result jumps the calendar to that date. A repeating event or task is listed once, as its next occurrence.
 - **Public holidays**: pick a country in your profile to show its public holidays on the calendar (from [Nager.Date](https://date.nager.at), no API key needed).
-- **Light and dark mode**: toggle with the sun/moon icon in the app bar. It follows your system setting until you choose, and remembers your choice on that browser.
+- **Light and dark mode**: choose Light or Dark in your profile settings. It follows your system setting until you choose, and remembers your choice on that browser.
 - **Profile page** (person icon in the app bar):
   - Display name
   - Time zone

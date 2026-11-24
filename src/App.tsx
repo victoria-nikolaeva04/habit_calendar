@@ -15,14 +15,14 @@ import { useTaskLists } from './hooks/useTaskLists'
 import { ALL_LISTS } from './lib/tasks'
 import { useUndoStack } from './hooks/useUndoStack'
 import { useTheme } from './hooks/useTheme'
-import { Moon, Sun, UserRound } from 'lucide-react'
+import { UserRound } from 'lucide-react'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
 
 export default function App() {
   const { session, loading } = useSession()
-  const { theme, toggle: toggleTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [view, setView] = useState<View>('month')
   const [showProfile, setShowProfile] = useState(false)
   const [jump, setJump] = useState<{ date: Date } | null>(null) // asks the views to show a date
@@ -67,7 +67,7 @@ export default function App() {
   return (
     <>
       {showProfile && profile && (
-        <Profile session={session} profile={profile} onSaved={setProfile} onBack={() => setShowProfile(false)} />
+        <Profile session={session} profile={profile} theme={theme} onThemeChange={setTheme} onSaved={setProfile} onBack={() => setShowProfile(false)} />
       )}
       {/* Kept mounted (just hidden) while the profile is open, so the date you were looking at isn't lost */}
       <div className="calendar-pane" hidden={showProfile && !!profile}>
@@ -78,8 +78,6 @@ export default function App() {
             ))}
           </select>
           <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={goTo} lists={lists} onChanged={changed} />
-          <button className="theme-btn" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}</button>
           <button className="profile-btn" disabled={!profile}
             aria-label="Profile"
             title={profile ? 'Profile' : 'Loading your profile…'}

@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { browserTimeZone } from '../lib/tz'
 import { deleteAccount, updateProfile, type Profile as ProfileRow } from '../lib/api'
+import type { Theme } from '../hooks/useTheme'
 import { PALETTES, getPalette, setPalette } from '../lib/palettes'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -13,9 +14,11 @@ type Props = {
   profile: ProfileRow
   onSaved: (p: ProfileRow) => void
   onBack: () => void
+  theme: Theme
+  onThemeChange: (t: Theme) => void
 }
 
-export function Profile({ session, profile, onSaved, onBack }: Props) {
+export function Profile({ session, profile, onSaved, onBack, theme, onThemeChange }: Props) {
   const userId = session.user.id
   const [displayName, setDisplayName] = useState(profile.display_name ?? '')
   const [timezone, setTimezone] = useState(profile.timezone)
@@ -145,6 +148,16 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
                 <button key={v} type="button" role="radio" aria-checked={timeFormat === v}
                   className={timeFormat === v ? 'selected' : ''}
                   onClick={() => { setTimeFormat(v); touch() }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="row">
+            <div className="row-text"><span className="row-label">Appearance</span>
+              <span className="row-hint">Light or dark. Saved on this device.</span></div>
+            <div className="segmented" role="radiogroup" aria-label="Appearance">
+              {([['light', 'Light'], ['dark', 'Dark']] as const).map(([v, label]) => (
+                <button key={v} type="button" role="radio" aria-checked={theme === v}
+                  className={theme === v ? 'selected' : ''} onClick={() => onThemeChange(v)}>{label}</button>
               ))}
             </div>
           </div>
