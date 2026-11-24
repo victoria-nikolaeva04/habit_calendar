@@ -116,7 +116,7 @@ export function expandTasks(rows: TaskRow[], from: string, to: string): Task[] {
 async function withSubtasks(tasks: Task[]): Promise<Task[]> {
   const ids = tasks.filter((t) => !t.virtual && !t.series_id).map((t) => t.id)
   if (ids.length === 0) return tasks
-  const { data, error } = await supabase.from('tasks').select('*').in('parent_id', ids).order('created_at')
+  const { data, error } = await supabase.from('tasks').select('*').in('parent_id', ids).order('created_at').order('id')
   if (error) throw error
   const subs = new Map<string, TaskRow[]>()
   for (const s of data) subs.set(s.parent_id!, [...(subs.get(s.parent_id!) ?? []), s])
@@ -247,7 +247,11 @@ export async function syncSubtasks(parentId: string, current: TaskRow[], next: {
     const { error } = await supabase.from('tasks').delete().in('id', removed)
     if (error) throw error
   }
-  const created = next.filter((s) => !s.id).map((s) => ({ title: s.title, parent_id: parentId }))
+  // Rows inserted together would all get the same created_at (the list order), and ties come back in whatever
+  // order the database likes, so ticking one could move it. A millisecond apart keeps them in the order typed.
+  const now = Date.now()
+  const created = next.filter((s) => !s.id)
+    .map((s, i) => ({ title: s.title, parent_id: parentId, created_at: new Date(now + i).toISOString() }))
   if (created.length) {
     const { error } = await supabase.from('tasks').insert(created)
     if (error) throw error
@@ -262,8 +266,10 @@ export async function syncSubtasks(parentId: string, current: TaskRow[], next: {
 
 // ---------- Writing: completion, and the repeating-task edits ----------
 
+// It keeps the series' creation date, which the list order falls back on, so ticking or editing one occurrence
+// doesn't move it below the other tasks due at the same time.
 const exceptionOf = (t: Task, fields: TaskFields) => ({
-  ...fields, series_id: t.series_id, original_date: t.original_date,
+  ...fields, series_id: t.series_id, original_date: t.original_date, created_at: t.created_at,
 })
 
 // Tick a task or subtask on or off. Doing it to a generated occurrence adds its exception row.
