@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { browserTimeZone } from '../lib/tz'
 import { deleteAccount, updateProfile, type Profile as ProfileRow } from '../lib/api'
+import { PALETTES, getPalette, setPalette } from '../lib/palettes'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -19,6 +20,7 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
   const [displayName, setDisplayName] = useState(profile.display_name ?? '')
   const [timezone, setTimezone] = useState(profile.timezone)
   const [weekStart, setWeekStart] = useState(profile.week_start_on)
+  const [palette, setPaletteState] = useState(getPalette)
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(profile.time_format === '24h' ? '24h' : '12h')
   const [holidayCountry, setHolidayCountry] = useState(profile.holiday_country ?? '')
   const [countries, setCountries] = useState<Country[]>([])
@@ -146,6 +148,17 @@ export function Profile({ session, profile, onSaved, onBack }: Props) {
               ))}
             </div>
           </div>
+          <label className="row">
+            <div className="row-text"><span className="row-label">Event colors</span>
+              <span className="row-hint">The swatches offered when you add or edit an event. Saved on this device.</span>
+              <div className="palette-preview" aria-hidden="true">
+                {palette.colors.map((c) => <span key={c} style={{ background: c }} />)}
+              </div>
+            </div>
+            <select value={palette.id} onChange={(e) => { setPalette(e.target.value); setPaletteState(getPalette()) }}>
+              {PALETTES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
           <label className="row">
             <div className="row-text"><span className="row-label">Public holidays</span>
               <span className="row-hint">Shown as all-day items on your calendar.</span>

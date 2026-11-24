@@ -8,8 +8,8 @@ import {
 import { describeRule, lastOccurrence, splitRule, type Recurrence } from '../lib/recurrence'
 import { initialRepeat, repeatError, repeatRule } from '../lib/repeat'
 import { RepeatPicker } from './RepeatPicker'
+import { getPalette } from '../lib/palettes'
 
-const COLORS = ['#5b6cff', '#ffa95c', '#38bdf8', '#34d399', '#f87171', '#f472b6', '#a78bfa', '#64748b']
 
 // <input type="datetime-local"> wants "2026-11-13T09:00"; `d` must already be in the profile time zone
 const toInput = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm")
@@ -30,6 +30,7 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
   const [allDay, setAllDay] = useState(event?.all_day ?? false)
   const [notes, setNotes] = useState(event?.notes ?? '')
   const [color, setColor] = useState<string | null>(event?.color ?? null)
+  const [palette] = useState(getPalette) // chosen on the profile page
   const [rep, setRep] = useState(() => initialRepeat(defaultStart.getDay()))
   // Editing one occurrence of a series: change just this one, this and the ones after it, or the whole series
   const inSeries = !!event?.series_id
@@ -263,7 +264,12 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
           <div className="swatches" role="radiogroup" aria-label="Color">
             <button type="button" role="radio" aria-checked={color === null} aria-label="Default"
               className={`swatch none${color === null ? ' selected' : ''}`} onClick={() => setColor(null)} />
-            {COLORS.map((c) => (
+            {/* A color from another palette (or an older custom one) stays selectable until changed */}
+            {color && !palette.colors.includes(color) && (
+              <button type="button" role="radio" aria-checked aria-label={color}
+                className="swatch selected" style={{ background: color }} />
+            )}
+            {palette.colors.map((c) => (
               <button key={c} type="button" role="radio" aria-checked={color === c} aria-label={c}
                 className={`swatch${color === c ? ' selected' : ''}`} style={{ background: c }}
                 onClick={() => setColor(c)} />
