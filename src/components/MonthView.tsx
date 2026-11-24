@@ -19,6 +19,8 @@ import { TaskPopup } from './TaskPopup'
 import { useTasks } from '../hooks/useTasks'
 import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
+import { useEventDrag } from '../hooks/useEventDrag'
+import type { History } from '../hooks/useUndoStack'
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -44,7 +46,7 @@ function gridRange(month: Date, weekStartsOn: WeekDay) {
   }
 }
 
-export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string }) {
+export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter, history }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string; history: History }) {
   const [month, setMonth] = useState(() => startOfMonth(selected))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
@@ -58,6 +60,8 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
   const [expanded, setExpanded] = useState<number | null>(null) // day (ms) showing all its events
   const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const { begin, preview, clear, classFor } = useEventDrag({ timeZone, history, onChanged: () => onChanged?.(), onError: setError })
+  const withDrag = preview(events)
   const { start, end } = gridRange(month, weekStartsOn)
   const days = eachDayOfInterval({ start, end })
   const taskDays = useTasks(start, end, version, listFilter)
@@ -83,6 +87,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       .then((data) => {
         if (cancelled) return
         setEvents(data)
+        clear()
         setError(null)
       })
       .catch((e: Error) => {
@@ -90,7 +95,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       })
     // Ignore the result if the user changed months before it came back
     return () => { cancelled = true }
-  }, [month, reloadKey, weekStartsOn, timeZone, version])
+  }, [month, reloadKey, weekStartsOn, timeZone, version, clear])
 
   return (
     <section className="month">
@@ -107,7 +112,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
           <div key={d} className="weekday">{d}</div>
         ))}
         {days.map((day) => {
-          const dayEvents = eventsOn(day, events)
+          const dayEvents = eventsOn(day, withDrag)
           const isExpanded = expanded === day.getTime()
           const dayHolidays = holidays.get(format(day, 'yyyy-MM-dd')) ?? []
           const dayTasks = taskDays.get(dayKey(day)) ?? []
@@ -127,6 +132,8 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
                 isSameDay(day, selected) && 'selected',
                 isExpanded && 'expanded',
               ].filter(Boolean).join(' ')}
+              data-grid="day"
+              data-day={format(day, 'yyyy-MM-dd')}
               role="button"
               tabIndex={0}
               aria-label={`${format(day, 'EEEE, MMMM d')}: add event`}
@@ -142,10 +149,11 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
                 return (
                   <div
                     key={e.id}
-                    className="event"
+                    className={`event${classFor(e)}`}
                     style={eventStyle(e.color)}
                     role="button"
                     tabIndex={0}
+                    onPointerDown={(ev) => begin(ev, e, 'move', 'day')}
                     title={eventTooltip(e, timeZone, timeFormat)}
                     onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                     onKeyDown={activate(() => setEditing({ event: e }))}

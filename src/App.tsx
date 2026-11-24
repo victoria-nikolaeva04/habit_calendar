@@ -13,6 +13,7 @@ import { SearchBox } from './components/SearchBox'
 import { SidePanel } from './components/SidePanel'
 import { useTaskLists } from './hooks/useTaskLists'
 import { ALL_LISTS } from './lib/tasks'
+import { useUndoStack } from './hooks/useUndoStack'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
@@ -53,6 +54,10 @@ export default function App() {
   // A filter naming a list that is gone (or belongs to another user) falls back to all lists
   const filter = listFilter === ALL_LISTS || listFilter === 'default' || lists.some((l) => l.id === listFilter) ? listFilter : ALL_LISTS
   const changed = useCallback(() => setVersion((n) => n + 1), [])
+  const history = useUndoStack(changed)
+  // Undo history belongs to one user: forget it on sign-out or when another user signs in
+  const [historyUser, setHistoryUser] = useState(userId)
+  if (userId !== historyUser) { setHistoryUser(userId); history.clear() }
 
   if (loading) return <p className="loading">Loading…</p>
   if (!session) return <SignIn />
@@ -83,15 +88,22 @@ export default function App() {
         <div className="calendar-layout">
           <div className="calendar-main">
             {/* key: switching time zone restarts the view at "today" in the new zone */}
-            {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} />}
-            {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} />}
-            {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} />}
+            {view === 'month' && <MonthView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} history={history} />}
+            {view === 'week' && <WeekView key={timeZone} weekStartsOn={weekStartsOn} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} history={history} />}
+            {view === 'day' && <DayView key={timeZone} timeFormat={timeFormat} timeZone={timeZone} holidayCountry={holidayCountry} jump={jump} selected={selected} version={version} onSelectDay={select} onChanged={changed} lists={lists} listFilter={filter} history={history} />}
           </div>
           <SidePanel day={selected} timeZone={timeZone} timeFormat={timeFormat} holidayCountry={holidayCountry}
             version={version} onGoTo={goTo} onChanged={changed}
             lists={lists} listFilter={filter} onListFilter={setListFilter} onListsChanged={reloadLists} />
         </div>
       </div>
+      {(history.notice || history.error) && (
+        <div className="undo-toast" role="status">
+          <span>{history.error ?? history.notice?.label}</span>
+          {!history.error && <button type="button" disabled={!history.canUndo} onClick={() => void history.undo()}>Undo</button>}
+          <button type="button" className="undo-dismiss" aria-label="Dismiss" onClick={history.dismiss}>×</button>
+        </div>
+      )}
     </>
   )
 }

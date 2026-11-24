@@ -1552,3 +1552,97 @@ button:disabled {
 h1, h2, .month-header h2 {
   font-family: var(--font-display);
 }
+
+/* ---------- Dragging events ---------- */
+
+.event {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.dragging-event,
+body.dragging-event * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.event.dragging {
+  opacity: 0.85;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 50%);
+  z-index: 50 !important;
+  pointer-events: none;
+}
+
+.event.drag-ghost {
+  opacity: 0.85;
+  outline: 1px dashed var(--ev);
+  z-index: 50 !important;
+  pointer-events: none;
+}
+
+.event.drag-origin {
+  opacity: 0.5;
+}
+
+.week-event .resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  cursor: ns-resize;
+}
+
+.week-event .resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 16px;
+  height: 2px;
+  margin-left: -8px;
+  border-radius: 1px;
+  background: var(--ev);
+  opacity: 0;
+}
+
+.week-event:hover .resize-handle::after,
+.week-event.dragging .resize-handle::after {
+  opacity: 0.8;
+}
+
+.undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.5rem 0.6rem 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.undo-toast span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-toast button {
+  padding: 0.25rem 0.7rem;
+}
+
+.undo-toast .undo-dismiss {
+  padding: 0.25rem 0.5rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+}

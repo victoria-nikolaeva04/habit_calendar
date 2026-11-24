@@ -18,14 +18,17 @@ import { TaskPopup } from './TaskPopup'
 import { useTasks } from '../hooks/useTasks'
 import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
-import { HOUR_PX, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
+import { HOUR_PX, endsOnDay, eventsOn, layoutTimed, slotAt } from '../lib/dayLayout'
+import { ResizeHandle } from './ResizeHandle'
 import { useNow } from '../hooks/useNow'
+import { useEventDrag } from '../hooks/useEventDrag'
+import type { History } from '../hooks/useUndoStack'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
-export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string }) {
+export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter, history }: { weekStartsOn?: WeekDay; timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string; history: History }) {
   const opts = useMemo(() => ({ weekStartsOn }), [weekStartsOn])
   // Any date inside the visible week; the week itself is derived so a changed "week starts on" re-aligns it
   const [anchor, setAnchor] = useState(() => inTz(selected, timeZone))
@@ -41,6 +44,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
   const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const { begin, preview, clear, classFor } = useEventDrag({ timeZone, history, onChanged: () => onChanged?.(), onError: setError })
+  const shown = preview(events)
   const days = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, opts) })
   const holidays = useHolidays(holidayCountry, days[0], days[6])
   const taskDays = useTasks(days[0], days[6], version, listFilter)
@@ -60,13 +65,14 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
       .then((data) => {
         if (cancelled) return
         setEvents(data)
+        clear()
         setError(null)
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [weekStart, reloadKey, opts, timeZone, version])
+  }, [weekStart, reloadKey, opts, timeZone, version, clear])
 
   const last = days[6]
   const title = weekStart.getMonth() === last.getMonth()
@@ -101,6 +107,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
             <div
               key={day.toISOString()}
               className="week-col"
+              data-grid="day"
+              data-day={format(day, 'yyyy-MM-dd')}
               role="button"
               tabIndex={0}
               aria-label={`${format(day, 'EEEE, MMMM d')}: add all-day event`}
@@ -108,13 +116,14 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
               onKeyDown={activate(() => setEditing({ day }))}
             >
               {(holidays.get(format(day, 'yyyy-MM-dd')) ?? []).map((h) => <HolidayChip key={h.name} holiday={h} />)}
-              {eventsOn(day, events).filter((e) => e.all_day).map((e) => (
+              {eventsOn(day, shown).filter((e) => e.all_day).map((e) => (
                 <div
                   key={e.id}
-                  className="event"
+                  className={`event${classFor(e)}`}
                   style={eventStyle(e.color)}
                   role="button"
                   tabIndex={0}
+                  onPointerDown={(ev) => begin(ev, e, 'move', 'day')}
                   title={eventTooltip(e, timeZone, timeFormat)}
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                   onKeyDown={activate(() => setEditing({ event: e }))}
@@ -142,6 +151,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
             <div
               key={day.toISOString()}
               className={`week-col week-timed${isToday(day) ? ' today' : ''}`}
+              data-grid="timed"
+              data-day={format(day, 'yyyy-MM-dd')}
               style={{ height: HOUR_PX * 24 }}
               role="button"
               tabIndex={0}
@@ -152,18 +163,20 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
               {HOURS.map((h) => (
                 <div key={h} className="week-hour-line" style={{ top: h * HOUR_PX }} />
               ))}
-              {layoutTimed(eventsOn(day, events).filter((e) => !e.all_day), day, true).map(({ event: e, style }) => (
+              {layoutTimed(eventsOn(day, shown).filter((e) => !e.all_day), day, true).map(({ event: e, style }) => (
                 <div
                   key={e.id}
-                  className="event week-event"
+                  className={`event week-event${classFor(e)}`}
                   style={style}
                   role="button"
                   tabIndex={0}
+                  onPointerDown={(ev) => begin(ev, e, 'move', 'timed')}
                   title={eventTooltip(e, timeZone, timeFormat)}
                   onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                   onKeyDown={activate(() => setEditing({ event: e }))}
                 >
                   <strong>{formatTime(inTz(e.starts_at, timeZone), timeFormat)}</strong> {e.title}{e.series_id && <RepeatMark />}
+                  {endsOnDay(e, day) && <ResizeHandle onPointerDown={(ev) => begin(ev, e, 'resize', 'timed')} />}
                 </div>
               ))}
               {isToday(day) && <div className="now-line" style={{ top: nowTop }} aria-hidden="true" />}

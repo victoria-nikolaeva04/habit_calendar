@@ -25,6 +25,11 @@ export function eventsOn(day: Date, events: CalendarEvent[]) {
   })
 }
 
+// Whether an event's end is in this day's column (so its bottom edge can be dragged there)
+export function endsOnDay(event: CalendarEvent, day: Date) {
+  return new Date(event.ends_at).getTime() <= endOfDay(day).getTime() + 1
+}
+
 type Item = { event: CalendarEvent; top: number; height: number; col: number; cols: number }
 
 // Position timed events inside one day column (clamped to that day).

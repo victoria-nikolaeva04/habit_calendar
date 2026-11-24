@@ -15,12 +15,15 @@ import { TaskPopup } from './TaskPopup'
 import { useTasks } from '../hooks/useTasks'
 import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
-import { HOUR_PX, layoutTimed, slotAt } from '../lib/dayLayout'
+import { HOUR_PX, endsOnDay, layoutTimed, slotAt } from '../lib/dayLayout'
+import { ResizeHandle } from './ResizeHandle'
 import { useNow } from '../hooks/useNow'
+import { useEventDrag } from '../hooks/useEventDrag'
+import type { History } from '../hooks/useUndoStack'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
-export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string }) {
+export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, selected, version = 0, onSelectDay, onChanged, lists, listFilter, history }: { timeFormat?: TimeFormat; timeZone: string; holidayCountry?: string | null; jump?: { date: Date } | null; selected: Date; version?: number; onSelectDay?: (day: Date) => void; onChanged?: () => void; lists: TaskList[]; listFilter: string; history: History }) {
   const [day, setDay] = useState(() => startOfDay(inTz(selected, timeZone)))
   // Search results ask the calendar to show a date: follow each new request (adjusting state while rendering)
   const [seenJump, setSeenJump] = useState(jump)
@@ -34,6 +37,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
   const [editing, setEditing] = useState<{ event?: CalendarEvent; day?: Date; at?: Date } | null>(null)
   const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const { begin, preview, clear, classFor } = useEventDrag({ timeZone, history, onChanged: () => onChanged?.(), onError: setError })
   const dayTasks = useTasks(day, day, version, listFilter).get(dayKey(day)) ?? []
   const scrollRef = useRef<HTMLDivElement>(null)
   const nowInZone = inTz(useNow(), timeZone)
@@ -54,16 +58,18 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
       .then((data) => {
         if (cancelled) return
         setEvents(data)
+        clear()
         setError(null)
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message)
       })
     return () => { cancelled = true }
-  }, [day, reloadKey, timeZone, version])
+  }, [day, reloadKey, timeZone, version, clear])
 
-  const allDay = events.filter((e) => e.all_day)
-  const timed = events.filter((e) => !e.all_day)
+  const shown = preview(events)
+  const allDay = shown.filter((e) => e.all_day)
+  const timed = shown.filter((e) => !e.all_day)
 
   return (
     <section className="month week">
@@ -83,6 +89,8 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
           <div className="week-gutter">all-day</div>
           <div
             className="week-col"
+            data-grid="day"
+            data-day={format(day, 'yyyy-MM-dd')}
             role="button"
             tabIndex={0}
             aria-label="Add all-day event"
@@ -93,10 +101,11 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
             {allDay.map((e) => (
               <div
                 key={e.id}
-                className="event"
+                className={`event${classFor(e)}`}
                 style={eventStyle(e.color)}
                 role="button"
                 tabIndex={0}
+                onPointerDown={(ev) => begin(ev, e, 'move', 'day')}
                 title={eventTooltip(e, timeZone, timeFormat)}
                 onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                 onKeyDown={activate(() => setEditing({ event: e }))}
@@ -121,6 +130,8 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
           </div>
           <div
             className="week-col week-timed"
+            data-grid="timed"
+            data-day={format(day, 'yyyy-MM-dd')}
             style={{ height: HOUR_PX * 24 }}
             role="button"
             tabIndex={0}
@@ -134,10 +145,11 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
             {layoutTimed(timed, day).map(({ event: e, style }) => (
               <div
                 key={e.id}
-                className="event week-event"
+                className={`event week-event${classFor(e)}`}
                 style={style}
                 role="button"
                 tabIndex={0}
+                onPointerDown={(ev) => begin(ev, e, 'move', 'timed')}
                 title={eventTooltip(e, timeZone, timeFormat)}
                 onClick={(ev) => { ev.stopPropagation(); setEditing({ event: e }) }}
                 onKeyDown={activate(() => setEditing({ event: e }))}
@@ -146,6 +158,7 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
                   {formatTime(inTz(e.starts_at, timeZone), timeFormat)}–{formatTime(inTz(e.ends_at, timeZone), timeFormat)}
                 </strong>{' '}
                 {e.title}{e.series_id && <RepeatMark />}
+                {endsOnDay(e, day) && <ResizeHandle onPointerDown={(ev) => begin(ev, e, 'resize', 'timed')} />}
               </div>
             ))}
             {isToday(day) && <div className="now-line" style={{ top: nowTop }} aria-hidden="true" />}
