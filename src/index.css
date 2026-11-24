@@ -18,6 +18,10 @@
   --danger-border: #6b2a2d;
   --success-text: #6ce9a6;
   --radius: 12px;
+  --ev-text-base: white; /* event text = event color lightened (dark) or darkened (light) */
+  --ev-text-mix: 45%;
+  --ev-bg-mix: 18%;
+  --ev-bg-hover-mix: 28%;
   --shadow: 0 0 0 1px rgb(255 255 255 / 2%), 0 8px 24px rgb(0 0 0 / 35%);
 
   font-family: 'DM Sans', system-ui, sans-serif;
@@ -27,6 +31,37 @@
   color-scheme: dark; /* native controls (date pickers, dropdowns) match the theme */
   --scroll-thumb: rgb(255 255 255 / 18%);
   --scroll-thumb-hover: rgb(255 255 255 / 32%);
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-muted: #eceef5;
+  --border: #d9dce8;
+  --text: #14161f;
+  --text-muted: #5b6275;
+  --accent: #4a5af0;
+  --accent-hover: #3446d8;
+  --accent-soft: #e1e5ff;
+  --warm: #c25e00;
+  --warm-soft: #ffe8d1;
+  --danger-text: #c62828;
+  --danger-bg: #fdeceb;
+  --danger-border: #f1b4b0;
+  --success-text: #1a7f4b;
+  --ev-text-base: black;
+  --ev-text-mix: 55%;
+  --ev-bg-mix: 24%;
+  --ev-bg-hover-mix: 34%;
+  --shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 8px 24px rgb(20 22 31 / 12%);
+  color-scheme: light;
+  --scroll-thumb: rgb(0 0 0 / 22%);
+  --scroll-thumb-hover: rgb(0 0 0 / 38%);
+}
+
+.theme-btn,
+.profile-btn {
+  padding: 0.5rem 0.75rem;
 }
 
 * {
@@ -232,8 +267,8 @@ input[type='checkbox'] {
   --ev: var(--accent);
   font-size: 0.75rem;
   font-weight: 500;
-  color: color-mix(in srgb, var(--ev) 45%, white);
-  background: color-mix(in srgb, var(--ev) 18%, var(--surface));
+  color: color-mix(in srgb, var(--ev) var(--ev-text-mix), var(--ev-text-base));
+  background: color-mix(in srgb, var(--ev) var(--ev-bg-mix), var(--surface));
   border-left: 3px solid var(--ev);
   border-radius: 6px;
   padding: 3px 8px;
@@ -245,7 +280,7 @@ input[type='checkbox'] {
 }
 
 .event:hover {
-  background: color-mix(in srgb, var(--ev) 28%, var(--surface));
+  background: color-mix(in srgb, var(--ev) var(--ev-bg-hover-mix), var(--surface));
 }
 
 .holiday {
@@ -795,8 +830,8 @@ select:focus-visible {
 }
 .profile .danger:hover { background: var(--danger-border); }
 
-.app-bar .profile-btn {
-  margin-left: auto;
+.app-bar .theme-btn {
+  margin-left: auto; /* pushes the theme and profile icons to the right edge */
 }
 
 /* ---------- Keyboard focus for clickable calendar areas ---------- */
@@ -1208,14 +1243,14 @@ button:disabled {
   font-size: 0.8rem;
   text-align: left;
   --ev: var(--accent);
-  color: color-mix(in srgb, var(--ev) 45%, white);
-  background: color-mix(in srgb, var(--ev) 18%, var(--surface));
+  color: color-mix(in srgb, var(--ev) var(--ev-text-mix), var(--ev-text-base));
+  background: color-mix(in srgb, var(--ev) var(--ev-bg-mix), var(--surface));
   border: 1px solid color-mix(in srgb, var(--ev) 25%, var(--surface));
   border-radius: 8px;
 }
 
 .panel-event:hover {
-  background: color-mix(in srgb, var(--ev) 28%, var(--surface));
+  background: color-mix(in srgb, var(--ev) var(--ev-bg-hover-mix), var(--surface));
 }
 
 .panel-event strong {

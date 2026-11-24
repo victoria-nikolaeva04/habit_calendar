@@ -14,12 +14,15 @@ import { SidePanel } from './components/SidePanel'
 import { useTaskLists } from './hooks/useTaskLists'
 import { ALL_LISTS } from './lib/tasks'
 import { useUndoStack } from './hooks/useUndoStack'
+import { useTheme } from './hooks/useTheme'
+import { Moon, Sun, UserRound } from 'lucide-react'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
 
 export default function App() {
   const { session, loading } = useSession()
+  const { theme, toggle: toggleTheme } = useTheme()
   const [view, setView] = useState<View>('month')
   const [showProfile, setShowProfile] = useState(false)
   const [jump, setJump] = useState<{ date: Date } | null>(null) // asks the views to show a date
@@ -75,9 +78,14 @@ export default function App() {
             ))}
           </select>
           <SearchBox timeZone={timeZone} timeFormat={timeFormat} onPick={goTo} lists={lists} onChanged={changed} />
+          <button className="theme-btn" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}</button>
           <button className="profile-btn" disabled={!profile}
-            title={profile ? undefined : 'Loading your profile…'}
-            onClick={() => setShowProfile(true)}>Profile</button>
+            aria-label="Profile"
+            title={profile ? 'Profile' : 'Loading your profile…'}
+            onClick={() => setShowProfile(true)}>
+            <UserRound size={18} aria-hidden="true" />
+          </button>
         </div>
         {profileError && !profile && (
           <p role="alert" className="profile-error">
