@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addWeeks, eachDayOfInterval, endOfWeek, format,
-  isSameDay, isToday, startOfWeek,
+  isSameDay, isToday, startOfDay, startOfWeek,
 } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import type { Task, TaskList } from '../lib/taskApi'
@@ -83,7 +83,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
     <section className="month week">
       <header className="month-header">
         <h2>{title} <span className="year">{format(last, 'yyyy')}</span></h2>
-        <button className="today-btn" onClick={() => setAnchor(nowIn(timeZone))}>Today</button>
+        <button className="today-btn" onClick={() => { const now = nowIn(timeZone); setAnchor(now); onSelectDay?.(startOfDay(now)) }}>Today</button>
         <button className="nav-btn" aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}>‹</button>
         <button className="nav-btn" aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}>›</button>
       </header>

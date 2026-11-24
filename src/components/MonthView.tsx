@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   addMonths, eachDayOfInterval, endOfMonth, endOfWeek,
-  format, isSameDay, isSameMonth, isToday, startOfMonth, startOfWeek,
+  format, isSameDay, isSameMonth, isToday, startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns'
 import { eventsOn } from '../lib/dayLayout'
 import { getEvents, type CalendarEvent } from '../lib/api'
@@ -101,7 +101,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
     <section className="month">
       <header className="month-header">
         <h2>{format(month, 'MMMM')} <span className="year">{format(month, 'yyyy')}</span></h2>
-        <button className="today-btn" onClick={() => setMonth(startOfMonth(nowIn(timeZone)))}>Today</button>
+        <button className="today-btn" onClick={() => { const now = nowIn(timeZone); setMonth(startOfMonth(now)); onSelectDay?.(startOfDay(now)) }}>Today</button>
         <button className="nav-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
         <button className="nav-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>›</button>
       </header>
