@@ -169,6 +169,30 @@ export async function saveOccurrence(event: CalendarEvent, fields: EventFields) 
   await createEvent({ ...fields, series_id: event.series_id, original_start: event.original_start })
 }
 
+// Move or resize one event (an occurrence of a series gets its own exception row). Resolves to a function
+// that puts it back.
+export async function moveEvent(event: CalendarEvent, starts_at: string, ends_at: string): Promise<() => Promise<void>> {
+  if (event.virtual) {
+    const created = await createEvent({
+      title: event.title, notes: event.notes, color: event.color, all_day: event.all_day,
+      starts_at, ends_at, series_id: event.series_id, original_start: event.original_start,
+    })
+    return () => deleteEvent(created.id) // without its exception row the schedule generates the occurrence again
+  }
+  const before = { starts_at: event.starts_at, ends_at: event.ends_at }
+  await updateEvent(event.id, { starts_at, ends_at })
+  return () => updateEvent(event.id, before)
+}
+
+// A single, non-repeating copy of an event (also when copying one occurrence of a series).
+// Resolves to a function that deletes the copy.
+export async function duplicateEvent(event: CalendarEvent, starts_at: string, ends_at: string): Promise<() => Promise<void>> {
+  const copy = await createEvent({
+    title: event.title, notes: event.notes, color: event.color, all_day: event.all_day, starts_at, ends_at,
+  })
+  return () => deleteEvent(copy.id)
+}
+
 // Delete just one occurrence of a series: an exception marked cancelled keeps the schedule from generating it again
 export async function cancelOccurrence(event: CalendarEvent) {
   if (!event.virtual) return updateEvent(event.id, { cancelled: true })
