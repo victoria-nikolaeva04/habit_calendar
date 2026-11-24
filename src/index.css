@@ -18,6 +18,9 @@
   --danger-border: #6b2a2d;
   --success-text: #6ce9a6;
   --radius: 12px;
+  --shadow-lg: 0 20px 40px rgb(0 0 0 / 60%);
+  --shadow-md: 0 10px 24px rgb(0 0 0 / 18%);
+  --shadow-drag: 0 6px 18px rgb(0 0 0 / 50%);
   --ev-text-base: white; /* event text = event color lightened (dark) or darkened (light) */
   --ev-text-mix: 45%;
   --ev-bg-mix: 18%;
@@ -53,7 +56,10 @@
   --ev-text-mix: 55%;
   --ev-bg-mix: 24%;
   --ev-bg-hover-mix: 34%;
-  --shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 8px 24px rgb(20 22 31 / 12%);
+  --shadow: 0 1px 2px rgb(20 22 31 / 6%), 0 2px 8px rgb(20 22 31 / 5%);
+  --shadow-lg: 0 0 0 1px rgb(20 22 31 / 6%), 0 12px 32px rgb(20 22 31 / 16%);
+  --shadow-md: 0 4px 14px rgb(20 22 31 / 12%);
+  --shadow-drag: 0 6px 16px rgb(20 22 31 / 22%);
   color-scheme: light;
   --scroll-thumb: rgb(0 0 0 / 22%);
   --scroll-thumb-hover: rgb(0 0 0 / 38%);
@@ -434,7 +440,7 @@ input[type='checkbox'] {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 20px 40px rgb(0 0 0 / 60%);
+  box-shadow: var(--shadow-lg);
 }
 
 .event-form form {
@@ -1053,7 +1059,7 @@ button:disabled {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 24px rgb(0 0 0 / 18%);
+  box-shadow: var(--shadow-md);
 }
 
 .search-results ul {
@@ -1603,7 +1609,7 @@ body.dragging-event * {
 
 .event.dragging {
   opacity: 0.85;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 50%);
+  box-shadow: var(--shadow-drag);
   z-index: 50 !important;
   pointer-events: none;
 }
