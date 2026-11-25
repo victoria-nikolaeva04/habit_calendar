@@ -1948,3 +1948,17 @@ button:has(> svg) {
   display: inline-flex;
   vertical-align: middle;
 }
+
+/* ---------- Past events ---------- */
+
+/* Visual only: events that have ended are grayed out but still clickable and draggable */
+.event.past,
+.panel-event.past {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.event.past:hover,
+.panel-event.past:hover {
+  opacity: 0.85;
+}

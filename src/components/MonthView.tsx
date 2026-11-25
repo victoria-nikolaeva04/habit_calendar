@@ -8,7 +8,7 @@ import { getEvents, type CalendarEvent } from '../lib/api'
 import type { Task, TaskList } from '../lib/taskApi'
 import { EventPopup } from './EventPopup'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
-import { eventStyle } from '../lib/eventStyle'
+import { eventStyle, pastClass } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
@@ -22,6 +22,7 @@ import { inTz, nowIn } from '../lib/tz'
 import { useEventDrag } from '../hooks/useEventDrag'
 import type { History } from '../hooks/useUndoStack'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNow } from '../hooks/useNow'
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -61,6 +62,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
   const [expanded, setExpanded] = useState<number | null>(null) // day (ms) showing all its events
   const [editingTask, setEditingTask] = useState<{ task?: Task } | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const now = useNow()
   const { begin, preview, clear, classFor } = useEventDrag({ timeZone, history, onChanged: () => onChanged?.(), onError: setError })
   const withDrag = preview(events)
   const { start, end } = gridRange(month, weekStartsOn)
@@ -150,7 +152,7 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
                 return (
                   <div
                     key={e.id}
-                    className={`event${classFor(e)}`}
+                    className={`event${classFor(e)}${pastClass(e, now)}`}
                     style={eventStyle(e.color)}
                     role="button"
                     tabIndex={0}

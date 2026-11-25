@@ -7,7 +7,7 @@ import { getEvents, type CalendarEvent } from '../lib/api'
 import type { Task, TaskList } from '../lib/taskApi'
 import { EventPopup } from './EventPopup'
 import { formatTime, formatHour, type TimeFormat } from '../lib/timeFormat'
-import { eventStyle } from '../lib/eventStyle'
+import { eventStyle, pastClass } from '../lib/eventStyle'
 import { eventTooltip } from '../lib/eventLabel'
 import { RepeatMark } from './RepeatMark'
 import { activate } from '../lib/a11y'
@@ -51,7 +51,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
   const holidays = useHolidays(holidayCountry, days[0], days[6])
   const taskDays = useTasks(days[0], days[6], version, listFilter)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const nowInZone = inTz(useNow(), timeZone)
+  const now = useNow()
+  const nowInZone = inTz(now, timeZone)
   const nowTop = ((nowInZone.getHours() * 60 + nowInZone.getMinutes()) / 60) * HOUR_PX
 
   // Open scrolled to about the current hour instead of midnight
@@ -120,7 +121,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
               {eventsOn(day, shown).filter((e) => e.all_day).map((e) => (
                 <div
                   key={e.id}
-                  className={`event${classFor(e)}`}
+                  className={`event${classFor(e)}${pastClass(e, now)}`}
                   style={eventStyle(e.color)}
                   role="button"
                   tabIndex={0}
@@ -167,7 +168,7 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
               {layoutTimed(eventsOn(day, shown).filter((e) => !e.all_day), day, true).map(({ event: e, style }) => (
                 <div
                   key={e.id}
-                  className={`event week-event${classFor(e)}`}
+                  className={`event week-event${classFor(e)}${pastClass(e, now)}`}
                   style={style}
                   role="button"
                   tabIndex={0}

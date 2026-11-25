@@ -15,6 +15,11 @@ export function textOn(hex: string) {
   return (1.05) / (l + 0.05) >= (l + 0.05) / 0.05 ? '#ffffff' : '#111827'
 }
 
+// ' past' for events that have already ended, so the stylesheet can gray them out
+export function pastClass(e: { ends_at: string }, now: Date) {
+  return new Date(e.ends_at).getTime() < now.getTime() ? ' past' : ''
+}
+
 // Colors for an event chip; null/invalid color falls back to the stylesheet's default look
 export function eventStyle(color: string | null): CSSProperties {
   if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return {}

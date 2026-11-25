@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { addDays, endOfDay, format, isToday, startOfDay } from 'date-fns'
 import { getEvents, type CalendarEvent } from '../lib/api'
 import { getBacklogTasks, getTasks, type Task, type TaskList } from '../lib/taskApi'
-import { eventStyle } from '../lib/eventStyle'
+import { eventStyle, pastClass } from '../lib/eventStyle'
+import { useNow } from '../hooks/useNow'
 import { eventTooltip } from '../lib/eventLabel'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
 import { inTz, nowIn, toUtcIso } from '../lib/tz'
@@ -45,6 +46,7 @@ function describeTime(e: CalendarEvent, day: Date, timeZone: string, tf: TimeFor
 
 // Side panel next to the calendar, built as a stack of sections so more can be added under "Events".
 export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, onGoTo, onChanged, lists, listFilter, onListFilter, onListsChanged }: Props) {
+  const now = useNow()
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -134,7 +136,7 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
               <li key={e.id}>
                 <button
                   type="button"
-                  className="panel-event"
+                  className={`panel-event${pastClass(e, now)}`}
                   style={eventStyle(e.color)}
                   title={eventTooltip(e, timeZone, timeFormat)}
                   onClick={() => setEditing({ event: e })}
