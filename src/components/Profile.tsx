@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { browserTimeZone } from '../lib/tz'
 import { deleteAccount, updateProfile, type Profile as ProfileRow } from '../lib/api'
 import type { Theme } from '../hooks/useTheme'
+import { ArrowLeft, LogOut, Trash2 } from 'lucide-react'
 import { PALETTES, getPalette, setPalette } from '../lib/palettes'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -92,7 +93,7 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
 
   return (
     <div className="profile">
-      <button type="button" className="back-link" onClick={handleBack}>← Back to calendar</button>
+      <button type="button" className="back-link" onClick={handleBack}><ArrowLeft size={16} aria-hidden="true" /> Back to calendar</button>
       <h2>Settings</h2>
       <p className="subtitle">Manage your profile and how your calendar looks.</p>
       <form onSubmit={handleSave}>
@@ -193,7 +194,7 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
         <div className="row">
           <div className="row-text"><span className="row-label danger-label">Delete account</span>
             <span className="row-hint">Permanently removes your events, tasks and settings.</span></div>
-          <button type="button" className="danger" onClick={handleDelete}>Delete</button>
+          <button type="button" className="danger" onClick={handleDelete}><Trash2 size={16} aria-hidden="true" /> Delete</button>
         </div>
         {deleteError && <p role="alert" className="form-error">{deleteError}</p>}
       </section>

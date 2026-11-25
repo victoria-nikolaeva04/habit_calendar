@@ -1259,6 +1259,16 @@ button:disabled {
 .search input {
   width: 100%;
   box-sizing: border-box;
+  padding-left: 2.1rem;
+}
+
+.search .search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.7rem;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .search-results {
@@ -1912,4 +1922,29 @@ body.dragging-event * {
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
+}
+
+/* ---------- Icons ---------- */
+
+/* Buttons holding an icon (alone, or with a label): center them and space the label */
+button:has(> svg) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* Inline icon + text rows */
+.details-repeat,
+.repeat-summary,
+.event-form .field > span:has(> svg),
+.task-form .field > span:has(> svg) {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.repeat-mark {
+  display: inline-flex;
+  vertical-align: middle;
 }

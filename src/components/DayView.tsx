@@ -20,6 +20,7 @@ import { ResizeHandle } from './ResizeHandle'
 import { useNow } from '../hooks/useNow'
 import { useEventDrag } from '../hooks/useEventDrag'
 import type { History } from '../hooks/useUndoStack'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
@@ -79,8 +80,8 @@ export function DayView({ timeFormat = '12h', timeZone, holidayCountry, jump, se
           {format(day, 'EEEE, MMM d')} <span className="year">{format(day, 'yyyy')}</span>
         </h2>
         <button className="today-btn" onClick={() => setDay(startOfDay(nowIn(timeZone)))}>Today</button>
-        <button className="nav-btn" aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}>‹</button>
-        <button className="nav-btn" aria-label="Next day" onClick={() => setDay(addDays(day, 1))}>›</button>
+        <button className="nav-btn" aria-label="Previous day" onClick={() => setDay(addDays(day, -1))}><ChevronLeft size={16} aria-hidden="true" /></button>
+        <button className="nav-btn" aria-label="Next day" onClick={() => setDay(addDays(day, 1))}><ChevronRight size={16} aria-hidden="true" /></button>
       </header>
       {error && <p role="alert">{error}</p>}
 

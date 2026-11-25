@@ -1,6 +1,7 @@
 import { addMonths, format } from 'date-fns'
 import { MAX_REPEATS, type Freq } from '../lib/recurrence'
 import { repeatSummary, type Repeat, type RepeatState } from '../lib/repeat'
+import { Repeat as RepeatIcon } from 'lucide-react'
 
 const UNITS: { value: Freq; one: string; many: string }[] = [
   { value: 'daily', one: 'day', many: 'days' },
@@ -110,7 +111,7 @@ export function RepeatPicker({ state, onChange, start, zone, noun }: Props) {
           )}
         </>
       )}
-      {summary && <p className="repeat-summary">{'↻'} {summary}</p>}
+      {summary && <p className="repeat-summary"><RepeatIcon size={16} aria-hidden="true" /> {summary}</p>}
     </div>
   )
 }

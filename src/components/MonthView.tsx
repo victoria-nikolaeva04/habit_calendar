@@ -21,6 +21,7 @@ import { dayKey } from '../lib/tasks'
 import { inTz, nowIn } from '../lib/tz'
 import { useEventDrag } from '../hooks/useEventDrag'
 import type { History } from '../hooks/useUndoStack'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -102,8 +103,8 @@ export function MonthView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holi
       <header className="month-header">
         <h2>{format(month, 'MMMM')} <span className="year">{format(month, 'yyyy')}</span></h2>
         <button className="today-btn" onClick={() => { const now = nowIn(timeZone); setMonth(startOfMonth(now)); onSelectDay?.(startOfDay(now)) }}>Today</button>
-        <button className="nav-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
-        <button className="nav-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}>›</button>
+        <button className="nav-btn" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))}><ChevronLeft size={16} aria-hidden="true" /></button>
+        <button className="nav-btn" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))}><ChevronRight size={16} aria-hidden="true" /></button>
       </header>
       {error && <p role="alert">{error}</p>}
 

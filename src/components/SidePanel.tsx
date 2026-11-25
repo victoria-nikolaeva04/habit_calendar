@@ -14,6 +14,7 @@ import { RepeatMark } from './RepeatMark'
 import { TaskChip } from './TaskChip'
 import { TaskPopup } from './TaskPopup'
 import { ListsDialog } from './ListsDialog'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 type Props = {
   day: Date                     // the selected day, at the start of the day in the profile time zone
@@ -117,13 +118,13 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
               {format(day, 'MMMM d')}
             </h2>
           </div>
-          <button className="icon-btn" aria-label="Previous day" onClick={() => onGoTo(addDays(day, -1))}>‹</button>
-          <button className="icon-btn" aria-label="Next day" onClick={() => onGoTo(addDays(day, 1))}>›</button>
+          <button className="icon-btn" aria-label="Previous day" onClick={() => onGoTo(addDays(day, -1))}><ChevronLeft size={16} aria-hidden="true" /></button>
+          <button className="icon-btn" aria-label="Next day" onClick={() => onGoTo(addDays(day, 1))}><ChevronRight size={16} aria-hidden="true" /></button>
         </header>
         <section className="panel-section" aria-labelledby="panel-events-title">
           <div className="panel-section-head">
             <h3 id="panel-events-title">Schedule</h3>
-            <button type="button" className="icon-btn" aria-label="Add event" onClick={() => setEditing({ day })}>+</button>
+            <button type="button" className="icon-btn" aria-label="Add event" onClick={() => setEditing({ day })}><Plus size={16} aria-hidden="true" /></button>
           </div>
           {holidays.map((h) => <HolidayChip key={h.name} holiday={h} />)}
           {error && <p role="alert">{error}</p>}
@@ -152,7 +153,7 @@ export function SidePanel({ day, timeZone, timeFormat, holidayCountry, version, 
           <div className="panel-section-head">
             <h3 id="panel-tasks-title">Tasks</h3>
             {tasksLoaded && <span className="panel-count">{openCount} open</span>}
-            <button type="button" className="icon-btn" aria-label="Add task" onClick={() => setEditingTask({ day })}>+</button>
+            <button type="button" className="icon-btn" aria-label="Add task" onClick={() => setEditingTask({ day })}><Plus size={16} aria-hidden="true" /></button>
           </div>
           <div className="panel-list-bar">
             <select aria-label="Task list" value={listFilter} onChange={(e) => onListFilter(e.target.value)}>

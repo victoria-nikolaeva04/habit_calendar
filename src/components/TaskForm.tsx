@@ -7,6 +7,7 @@ import { describeRule, lastOccurrence, splitRule, type Recurrence } from '../lib
 import { initialRepeat, repeatError, repeatRule } from '../lib/repeat'
 import { DEFAULT_LIST_NAME, TASK_ZONE, dayEnd, dayKey, dayStart, isDone } from '../lib/tasks'
 import { RepeatPicker } from './RepeatPicker'
+import { Plus, Repeat, X } from 'lucide-react'
 
 type Props = {
   task?: Task               // set when editing
@@ -167,7 +168,7 @@ export function TaskForm({ task, day, lists, defaultList = null, onDone }: Props
         {inSeries && (
           <div className="field" role="radiogroup" aria-label="Apply changes to">
             <span>
-              {'↻'} Part of a repeating series
+              <Repeat size={16} aria-hidden="true" /> Part of a repeating series
               {task?.recurrence ? ` (${describeRule(task.recurrence as unknown as Recurrence)})` : ''}
             </span>
             <div className="scope">
@@ -239,12 +240,12 @@ export function TaskForm({ task, day, lists, defaultList = null, onDone }: Props
                     }}
                   />
                   <button type="button" className="icon-btn" aria-label={`Remove subtask ${i + 1}`} title="Remove"
-                    onClick={() => setSubtasks((cur) => cur.filter((_, j) => j !== i))}>{'✕'}</button>
+                    onClick={() => setSubtasks((cur) => cur.filter((_, j) => j !== i))}><X size={16} aria-hidden="true" /></button>
                 </li>
               ))}
             </ul>
             <button type="button" className="add-subtask" onClick={() => setSubtasks((cur) => [...cur, { title: '' }])}>
-              + Add subtask
+              <Plus size={16} aria-hidden="true" /> Add subtask
             </button>
           </div>
         )}

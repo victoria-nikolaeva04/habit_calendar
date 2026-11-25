@@ -4,6 +4,7 @@ import type { CalendarEvent } from '../lib/api'
 import { describeRule, type Recurrence } from '../lib/recurrence'
 import { formatTime, type TimeFormat } from '../lib/timeFormat'
 import { inTz } from '../lib/tz'
+import { Pencil, Repeat, X } from 'lucide-react'
 
 type Props = {
   event: CalendarEvent
@@ -51,12 +52,12 @@ export function EventDetails({ event, timeZone, timeFormat, onEdit, onClose }: P
       <div className="details-head">
         <span className="details-dot" style={{ background: color }} aria-hidden="true" />
         <h3>{event.title}</h3>
-        <button type="button" className="icon-btn" aria-label="Edit event" title="Edit" onClick={onEdit}>{'✎'}</button>
-        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}>{'✕'}</button>
+        <button type="button" className="icon-btn" aria-label="Edit event" title="Edit" onClick={onEdit}><Pencil size={16} aria-hidden="true" /></button>
+        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}><X size={16} aria-hidden="true" /></button>
       </div>
       <p className="details-when">{describeWhen(event, timeZone, timeFormat)}</p>
       {event.series_id && event.recurrence && (
-        <p className="details-repeat">{'↻'} {describeRule(event.recurrence as unknown as Recurrence)}</p>
+        <p className="details-repeat"><Repeat size={16} aria-hidden="true" /> {describeRule(event.recurrence as unknown as Recurrence)}</p>
       )}
       {event.notes && <p className="details-notes">{event.notes}</p>}
     </dialog>

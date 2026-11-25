@@ -9,6 +9,7 @@ import { describeRule, lastOccurrence, splitRule, type Recurrence } from '../lib
 import { initialRepeat, repeatError, repeatRule } from '../lib/repeat'
 import { RepeatPicker } from './RepeatPicker'
 import { getPalette } from '../lib/palettes'
+import { Repeat } from 'lucide-react'
 
 
 // <input type="datetime-local"> wants "2026-11-13T09:00"; `d` must already be in the profile time zone
@@ -209,7 +210,7 @@ export function EventForm({ event, day, at, timeZone, onDone }: Props) {
         {inSeries && (
           <div className="field" role="radiogroup" aria-label="Apply changes to">
             <span>
-              {'↻'} Part of a repeating series
+              <Repeat size={16} aria-hidden="true" /> Part of a repeating series
               {event?.recurrence ? ` (${describeRule(event.recurrence as Recurrence)})` : ''}
             </span>
             <div className="scope">

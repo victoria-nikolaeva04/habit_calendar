@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createTaskList, deleteTaskList, renameTaskList, type TaskList } from '../lib/taskApi'
+import { X } from 'lucide-react'
 
 type Props = {
   lists: TaskList[]
@@ -51,7 +52,7 @@ export function ListsDialog({ lists, onChanged, onDeleted, onClose }: Props) {
     >
       <div className="details-head">
         <h3>Task lists</h3>
-        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}>{'✕'}</button>
+        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}><X size={16} aria-hidden="true" /></button>
       </div>
       <ul className="lists-edit">
         <li><span className="list-builtin">My Tasks</span><small>built in</small></li>

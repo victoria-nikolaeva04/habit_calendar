@@ -4,6 +4,7 @@ import { setTaskDone, type Task, type TaskList, type TaskRow } from '../lib/task
 import { describeRule, type Recurrence } from '../lib/recurrence'
 import { DEFAULT_LIST_NAME, isDone, parseDay, taskTimeLabel } from '../lib/tasks'
 import type { TimeFormat } from '../lib/timeFormat'
+import { Pencil, Repeat, X } from 'lucide-react'
 
 type Props = {
   task: Task
@@ -59,12 +60,12 @@ export function TaskDetails({ task, lists, timeFormat, onEdit, onClose, onChange
       <div className="details-head">
         <span className="details-check" aria-hidden="true">{done ? '☑' : '☐'}</span>
         <h3 className={done ? 'details-done' : undefined}>{task.title}</h3>
-        <button type="button" className="icon-btn" aria-label="Edit task" title="Edit" onClick={onEdit}>{'✎'}</button>
-        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}>{'✕'}</button>
+        <button type="button" className="icon-btn" aria-label="Edit task" title="Edit" onClick={onEdit}><Pencil size={16} aria-hidden="true" /></button>
+        <button type="button" className="icon-btn" aria-label="Close" title="Close" onClick={onClose}><X size={16} aria-hidden="true" /></button>
       </div>
       <p className="details-when">{describeDue(task, timeFormat)}</p>
       {task.series_id && task.recurrence && (
-        <p className="details-repeat">{'↻'} {describeRule(task.recurrence as unknown as Recurrence)}</p>
+        <p className="details-repeat"><Repeat size={16} aria-hidden="true" /> {describeRule(task.recurrence as unknown as Recurrence)}</p>
       )}
       <p className="details-repeat">{done ? 'Completed' : 'Not completed'}{listName ? ` · ${listName}` : ''}</p>
       {task.notes && <p className="details-notes">{task.notes}</p>}

@@ -15,7 +15,7 @@ import { useTaskLists } from './hooks/useTaskLists'
 import { ALL_LISTS } from './lib/tasks'
 import { useUndoStack } from './hooks/useUndoStack'
 import { useTheme } from './hooks/useTheme'
-import { UserRound } from 'lucide-react'
+import { UserRound, X } from 'lucide-react'
 
 type View = 'month' | 'week' | 'day'
 const VIEWS: View[] = ['month', 'week', 'day']
@@ -112,7 +112,7 @@ export default function App() {
         <div className="undo-toast" role="status">
           <span>{history.error ?? history.notice?.label}</span>
           {!history.error && <button type="button" disabled={!history.canUndo} onClick={() => void history.undo()}>Undo</button>}
-          <button type="button" className="undo-dismiss" aria-label="Dismiss" onClick={history.dismiss}>×</button>
+          <button type="button" className="undo-dismiss" aria-label="Dismiss" onClick={history.dismiss}><X size={14} aria-hidden="true" /></button>
         </div>
       )}
     </>

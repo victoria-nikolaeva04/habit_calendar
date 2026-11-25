@@ -7,6 +7,7 @@ import { searchTasks, type Task, type TaskList } from '../lib/taskApi'
 import { dayKey, isDone, parseDay, taskTimeLabel } from '../lib/tasks'
 import { RepeatMark } from './RepeatMark'
 import { TaskPopup } from './TaskPopup'
+import { Search } from 'lucide-react'
 
 const MAX_SHOWN = 30
 
@@ -73,6 +74,7 @@ export function SearchBox({ timeZone, timeFormat, onPick, lists, onChanged }: Pr
   const showList = open && !!query
   return (
     <div className="search" ref={boxRef}>
+      <Search className="search-icon" size={16} aria-hidden="true" />
       <input
         type="search"
         aria-label="Search events"

@@ -23,6 +23,7 @@ import { ResizeHandle } from './ResizeHandle'
 import { useNow } from '../hooks/useNow'
 import { useEventDrag } from '../hooks/useEventDrag'
 import type { History } from '../hooks/useUndoStack'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 
@@ -84,8 +85,8 @@ export function WeekView({ weekStartsOn = 0, timeFormat = '12h', timeZone, holid
       <header className="month-header">
         <h2>{title} <span className="year">{format(last, 'yyyy')}</span></h2>
         <button className="today-btn" onClick={() => { const now = nowIn(timeZone); setAnchor(now); onSelectDay?.(startOfDay(now)) }}>Today</button>
-        <button className="nav-btn" aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}>‹</button>
-        <button className="nav-btn" aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}>›</button>
+        <button className="nav-btn" aria-label="Previous week" onClick={() => setAnchor(addWeeks(anchor, -1))}><ChevronLeft size={16} aria-hidden="true" /></button>
+        <button className="nav-btn" aria-label="Next week" onClick={() => setAnchor(addWeeks(anchor, 1))}><ChevronRight size={16} aria-hidden="true" /></button>
       </header>
       {error && <p role="alert">{error}</p>}
 
