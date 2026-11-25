@@ -3,7 +3,7 @@
 export interface Palette { id: string; name: string; colors: string[] }
 
 export const PALETTES: Palette[] = [
-  { id: 'classic', name: 'Classic', colors: ['#5b6cff', '#ffa95c', '#38bdf8', '#34d399', '#f87171', '#f472b6', '#a78bfa', '#64748b'] },
+  { id: 'classic', name: 'Classic', colors: ['#4d8bff', '#ffa95c', '#38bdf8', '#34d399', '#f87171', '#f472b6', '#a78bfa', '#64748b'] },
   { id: 'pastel', name: 'Pastel', colors: ['#a5b4fc', '#fdba74', '#7dd3fc', '#86efac', '#fca5a5', '#f9a8d4', '#d8b4fe', '#cbd5e1'] },
   { id: 'vivid', name: 'Vivid', colors: ['#2563eb', '#f97316', '#0891b2', '#16a34a', '#dc2626', '#db2777', '#7c3aed', '#ca8a04'] },
   { id: 'earth', name: 'Earth', colors: ['#b45309', '#92400e', '#65a30d', '#4d7c0f', '#0f766e', '#9a3412', '#78716c', '#a16207'] },

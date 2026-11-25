@@ -7,9 +7,9 @@
   --text: #eef0f6;
   --text-muted: #9aa1b5;
   /* Electric blue accent */
-  --accent: #4a5af0;
-  --accent-hover: #7a88ff;
-  --accent-soft: #1a2050;
+  --accent: #2f7bff;
+  --accent-hover: #6ea6ff;
+  --accent-soft: #112a55;
   /* Cantaloupe orange secondary */
   --warm: #ffa95c;
   --warm-soft: #3a2314;
@@ -43,9 +43,9 @@
   --border: #d9dce8;
   --text: #14161f;
   --text-muted: #5b6275;
-  --accent: #4a5af0;
-  --accent-hover: #3446d8;
-  --accent-soft: #e1e5ff;
+  --accent: #2f7bff;
+  --accent-hover: #1c5fd6;
+  --accent-soft: #dbe8ff;
   --warm: #c25e00;
   --warm-soft: #ffe8d1;
   --danger-text: #c62828;
