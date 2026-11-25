@@ -105,8 +105,7 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
             </div>
           </div>
           <label className="row">
-            <div className="row-text"><span className="row-label">Display name</span>
-              <span className="row-hint">Shown on shared habits and invites.</span></div>
+            <div className="row-text"><span className="row-label">Display name</span></div>
             <input value={displayName} placeholder="Your name"
               onChange={(e) => { setDisplayName(e.target.value); touch() }} />
           </label>
@@ -121,7 +120,6 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
           <h3>Preferences</h3>
           <label className="row">
             <div className="row-text"><span className="row-label">Time zone</span>
-              <span className="row-hint">Used for event times and reminders.</span>
               {timezone !== browserTimeZone() && (
                 <button type="button" className="link-btn"
                   onClick={(e) => { e.preventDefault(); setTimezone(browserTimeZone()); touch() }}>
@@ -141,8 +139,7 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
             </select>
           </label>
           <div className="row">
-            <div className="row-text"><span className="row-label">Time format</span>
-              <span className="row-hint">How times appear across the app.</span></div>
+            <div className="row-text"><span className="row-label">Time format</span></div>
             <div className="segmented" role="radiogroup" aria-label="Time format">
               {([['12h', '12-hour · 9:30 AM'], ['24h', '24-hour · 09:30']] as const).map(([v, label]) => (
                 <button key={v} type="button" role="radio" aria-checked={timeFormat === v}
@@ -152,8 +149,7 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
             </div>
           </div>
           <div className="row">
-            <div className="row-text"><span className="row-label">Appearance</span>
-              <span className="row-hint">Light or dark. Saved on this device.</span></div>
+            <div className="row-text"><span className="row-label">Appearance</span></div>
             <div className="segmented" role="radiogroup" aria-label="Appearance">
               {([['light', 'Light'], ['dark', 'Dark']] as const).map(([v, label]) => (
                 <button key={v} type="button" role="radio" aria-checked={theme === v}
@@ -163,7 +159,6 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
           </div>
           <label className="row">
             <div className="row-text"><span className="row-label">Event colors</span>
-              <span className="row-hint">The swatches offered when you add or edit an event. Saved on this device.</span>
               <div className="palette-preview" aria-hidden="true">
                 {palette.colors.map((c) => <span key={c} style={{ background: c }} />)}
               </div>
@@ -174,7 +169,6 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
           </label>
           <label className="row">
             <div className="row-text"><span className="row-label">Public holidays</span>
-              <span className="row-hint">Shown as all-day items on your calendar.</span>
               {countriesFailed && <small className="hint">Couldn't load the country list. Try again later.</small>}
             </div>
             <select value={holidayCountry} onChange={(e) => { setHolidayCountry(e.target.value); touch() }}>
@@ -193,9 +187,8 @@ export function Profile({ session, profile, onSaved, onBack, theme, onThemeChang
       <section className="card account-actions">
         <h3>Account</h3>
         <div className="row">
-          <div className="row-text"><span className="row-label">Sign out</span>
-            <span className="row-hint">End your session on this device.</span></div>
-          <button type="button" onClick={() => supabase.auth.signOut()}>Sign out</button>
+          <div className="row-text"><span className="row-label">Sign out</span></div>
+          <button type="button" onClick={() => supabase.auth.signOut()}><LogOut size={16} aria-hidden="true" /> Sign out</button>
         </div>
         <div className="row">
           <div className="row-text"><span className="row-label danger-label">Delete account</span>

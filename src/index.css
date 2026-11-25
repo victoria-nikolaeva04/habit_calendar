@@ -736,6 +736,7 @@ select:focus-visible {
 
 .back-link {
   align-self: flex-start;
+  justify-self: start; /* in the profile grid it would otherwise stretch across and center its text */
   background: none;
   border: none;
   padding: 0;
