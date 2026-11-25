@@ -817,15 +817,13 @@ select:focus-visible {
   border-top: 1px solid var(--border);
 }
 
-.profile .primary,
-.signin .primary {
+.profile .primary {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
   font-weight: 600;
 }
-.profile .primary:hover:not(:disabled),
-.signin .primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.profile .primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .profile .primary:disabled { background: var(--surface-muted); border-color: var(--border); color: var(--text-muted); }
 
 .profile .danger {
@@ -891,46 +889,258 @@ select:focus-visible {
   background: var(--warm);
 }
 
-/* ---------- Sign in ---------- */
+/* ---------- Landing / sign in ---------- */
 
-.signin {
-  width: min(380px, 100%);
-  margin: auto;
+.landing {
+  position: fixed; /* escapes #root so the dots cover the whole screen */
+  inset: 0;
+  overflow-y: auto; /* the app itself never scrolls, but the landing page does */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  text-align: center;
+  padding: 0 2rem;
+  scroll-behavior: smooth;
+  background: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.5px) 0 0 / 22px 22px;
 }
 
-.logo-mark {
+.landing > main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* shifts the hero to the middle of the screen */
+  width: 100%;
+}
+
+.landing > * {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lp-hero {
   display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 10px;
-  background: var(--accent);
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
+  gap: 3rem;
+  padding: 2rem 0;
+}
+
+.lp-copy h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.lp-strike {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.15em;
+  color: var(--warm);
+  transform: rotate(-1.5deg);
+  background: linear-gradient(transparent 55%, var(--warm-soft) 55%);
+}
+
+.lp-strike::after {
+  content: '';
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 54%;
+  height: 0.09em;
+  background: var(--warm);
+  border-radius: 99px;
+  transform: rotate(1deg);
+}
+
+.lp-lede {
+  margin: 1.25rem 0 1.75rem;
+  max-width: 34rem;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.lp-form form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 30rem;
+}
+
+.lp-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1.1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+}
+
+.lp-form .primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.3rem;
+  border-radius: 8px;
   color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lp-form .primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.lp-note,
+.lp-error {
+  margin: 0.75rem 0 0;
+  max-width: 30rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.lp-error {
+  color: var(--danger-text);
+}
+
+.lp-sent {
+  max-width: 30rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.lp-sent p {
+  margin: 0 0 0.75rem;
+}
+
+/* Calendar preview */
+
+.lp-stage {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.lp-badge {
+  position: absolute;
+  z-index: 2;
+  bottom: 0;
+  left: -0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--success-text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.lp-preview {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.lp-preview-head {
+  margin-bottom: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
-.signin h1 { margin: 0.25rem 0 0; font-size: 1.4rem; }
-.signin p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
-.signin .lede { color: var(--text-muted); }
-.signin .footnote { font-size: 0.75rem; margin-top: 0.5rem; }
-
-.signin .card {
-  width: 100%;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  text-align: left;
+.lp-preview-head span {
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
-.signin .field { display: flex; flex-direction: column; gap: 0.35rem; }
-.signin .field span { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
-.signin .field input { width: 100%; }
+.lp-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.lp-preview-wd,
+.lp-preview-day {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-preview-wd {
+  padding: 0.3rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.lp-preview-day {
+  min-height: 4.2rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.lp-preview-day > span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.lp-preview-day.out > span {
+  opacity: 0.4;
+}
+
+.lp-preview-day.today > span {
+  align-self: flex-start;
+  min-width: 1.2rem;
+  text-align: center;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.lp-preview-event {
+  overflow: hidden;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: color-mix(in srgb, var(--ev) var(--ev-text-mix), var(--ev-text-base));
+  background: color-mix(in srgb, var(--ev) var(--ev-bg-mix), var(--surface));
+  border-left: 2px solid var(--ev);
+  border-radius: 3px;
+}
+
+@media (max-width: 860px) {
+  .lp-hero {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .lp-form form {
+    flex-direction: column;
+  }
+}
 
 button:disabled {
   opacity: 0.6;

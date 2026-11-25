@@ -1,8 +1,8 @@
-# Habit Calendar
+# Calendar
 
-A calendar app to help with habit tracking. Built with React, TypeScript, Vite and Supabase.
+A calendar app. Built with React, TypeScript, Vite and Supabase.
 
-> Work in progress. Calendar views, events and user profiles are working; habit-tracking features are still to come.
+> Work in progress. Calendar views, events, tasks and user profiles are working.
 
 ## Features
 
@@ -139,7 +139,3 @@ src/
 supabase/
   migrations/          # Database schema and functions
 ```
-
-## Roadmap
-
-- Habit tracking features (the original goal of the app)
